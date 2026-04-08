@@ -1,12 +1,7 @@
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
-import { connectMongo, closeMongo } from "./config/mongoose.js";
-import { connectPrisma, closePrisma } from "./config/prisma.js";
 
 const start = async (): Promise<void> => {
-  // await connectMongo();
-  // await connectPrisma();
-
   const app = createApp();
 
   const server = app.listen(config.port, () => {
@@ -16,8 +11,6 @@ const start = async (): Promise<void> => {
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received. Shutting down gracefully...`);
     server.close(async () => {
-      // await closeMongo();
-      // await closePrisma();
       console.log("Server closed");
       process.exit(0);
     });
