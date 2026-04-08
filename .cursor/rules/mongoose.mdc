@@ -1,0 +1,22 @@
+---
+description: Mongoose ODM conventions for MongoDB models
+globs: src/models/**/*.ts
+alwaysApply: false
+---
+
+# Mongoose
+
+Follow the skill: `.agents/skills/mongoose`
+
+## Conventions
+
+- Always define a TypeScript interface alongside the schema
+- Use `timestamps: true` on every schema
+- Use `select: false` on password fields
+- Add indexes for frequent query patterns
+- Use `lean()` for read-only queries
+- Use `pre('save')` hooks for password hashing
+- Define instance methods and statics with proper TypeScript typing
+- Use `populate()` sparingly — prefer aggregation for complex joins
+- Handle `MongoServerError` code `11000` for duplicate key violations
+- Use transactions (with replica sets) for multi-document writes

@@ -1,0 +1,32 @@
+---
+description: Global project conventions — always active
+alwaysApply: true
+---
+
+# Project Defaults
+
+This is an Express.js + TypeScript backend with **Mongoose** (MongoDB) and **Prisma** (PostgreSQL).
+
+## Skills to Follow
+
+Always reference these project skills when relevant:
+- `.agents/skills/express-rest-api` — routing, middleware, validation, error handling
+- `.agents/skills/nodejs-backend-patterns` — layered architecture, DI, auth, caching
+- `.agents/skills/mongoose` — MongoDB schemas, ODM patterns
+- `.agents/skills/prisma-postgres` — PostgreSQL schema, migrations, queries
+
+## TypeScript Rules
+
+- Avoid `any` — create proper types/interfaces
+- Use `interface` for object shapes, `type` for unions/intersections
+- Use PascalCase for types, camelCase for variables/functions, kebab-case for files
+- Use Zod for runtime validation with inferred types
+- Prefer `const` objects over enums
+
+## Architecture
+
+- **Layered**: Routes → Controllers → Services → Repositories
+- Business logic lives in `services/`, never in route handlers
+- All errors flow through the centralized error handler middleware
+- Environment config lives in `src/config/index.ts` — never hardcode secrets
+- Use graceful shutdown for database connections (already in `server.ts`)

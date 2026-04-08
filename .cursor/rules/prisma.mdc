@@ -1,0 +1,32 @@
+---
+description: Prisma ORM conventions for PostgreSQL
+globs: prisma/**,src/**/*prisma*
+alwaysApply: false
+---
+
+# Prisma + PostgreSQL
+
+Follow the skill: `.agents/skills/prisma-postgres`
+
+## Schema Conventions
+
+- Use `@map("snake_case")` for column names, PascalCase for model names
+- Add `@@map("table_name")` for table names
+- Use `@default(uuid())` for IDs
+- Add `createdAt`/`updatedAt` with `@default(now())` and `@updatedAt`
+- Define `@@index` for foreign keys and frequently filtered columns
+- Set `onDelete: Cascade` or `SetNull` explicitly on relations
+
+## Query Conventions
+
+- Use the singleton pattern from `src/config/prisma.ts` — never instantiate `new PrismaClient()` elsewhere
+- Use `select` or `include` to limit fields — never fetch everything
+- Use `findUniqueOrThrow` / `findFirstOrThrow` when absence is an error
+- Use interactive `$transaction` for multi-step writes with business logic
+- Handle `PrismaClientKnownRequestError` by code: `P2002` = unique constraint, `P2025` = not found
+
+## Workflow
+
+- Run `npx prisma generate` after every schema change
+- Run `npx prisma migrate dev --name <description>` for migrations
+- Use `npx prisma migrate deploy` in CI/production

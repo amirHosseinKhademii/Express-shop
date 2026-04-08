@@ -1,0 +1,37 @@
+---
+description: Express.js + TypeScript conventions for this project
+globs: src/**/*.ts
+alwaysApply: false
+---
+
+# Express + TypeScript
+
+This project uses Express.js with TypeScript. Follow the skills:
+- `.agents/skills/express-rest-api`
+- `.agents/skills/nodejs-backend-patterns`
+
+## Structure
+
+```
+src/
+  config/        # env vars, DB connections
+  middleware/    # auth, error handler, validation, logging
+  routes/       # Router per resource
+  services/     # Business logic (framework-agnostic)
+  models/       # Mongoose models
+  types/        # TypeScript type extensions
+  utils/        # Errors, response helpers
+  app.ts        # Express factory
+  server.ts     # Entry point
+```
+
+## Conventions
+
+- Use `async/await` everywhere, never callbacks
+- Validate requests with Zod via `validateRequest` middleware
+- Throw `AppError` subclasses (`NotFoundError`, `ValidationError`, etc.) — the global error handler catches them
+- Use `ApiResponse.success()` / `.created()` / `.paginated()` / `.error()` for consistent responses
+- Organize routes per resource: `src/routes/{resource}/index.ts`
+- Keep controllers thin — delegate to service layer
+- Use `authenticate` middleware on protected routes
+- Extend `Express.Request` in `src/types/express.d.ts` for custom properties
