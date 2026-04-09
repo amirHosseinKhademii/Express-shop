@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { AppError, ValidationError } from "../utils/errors.js";
+import { AppError, NotFoundError, ValidationError } from "../utils/errors.js";
 
 export const errorHandler = (
   err: Error,
@@ -15,6 +15,7 @@ export const errorHandler = (
       ...(err instanceof ValidationError && err.details
         ? { details: err.details }
         : {}),
+      ...(err instanceof NotFoundError ? { resource: err.resource } : {}),
     });
     return;
   }

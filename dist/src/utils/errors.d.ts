@@ -10,6 +10,7 @@ export declare class ValidationError extends AppError {
     constructor(message: string, details?: unknown[] | undefined);
 }
 export declare class NotFoundError extends AppError {
+    readonly resource: string;
     constructor(resource?: string);
 }
 export declare class UnauthorizedError extends AppError {

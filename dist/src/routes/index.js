@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { adminRoutes } from "./admin.js";
+import { shopRoutes } from "./shop.js";
 const router = Router();
 router.get("/health", (_req, res) => {
     const { heapUsed, heapTotal, rss } = process.memoryUsage();
@@ -9,5 +11,7 @@ router.get("/health", (_req, res) => {
         memoryUsage: { heapUsed, heapTotal, rss },
     });
 });
+router.use("/admin", adminRoutes);
+router.use("/shop", shopRoutes);
 export default router;
 //# sourceMappingURL=index.js.map

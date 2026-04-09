@@ -18,6 +18,7 @@ export class ValidationError extends AppError {
 export class NotFoundError extends AppError {
     constructor(resource = "Resource") {
         super(`${resource} not found`, 404, "NOT_FOUND");
+        this.resource = resource;
     }
 }
 export class UnauthorizedError extends AppError {

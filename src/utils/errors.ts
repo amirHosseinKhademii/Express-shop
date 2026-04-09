@@ -21,8 +21,11 @@ export class ValidationError extends AppError {
 }
 
 export class NotFoundError extends AppError {
+  public readonly resource: string;
+
   constructor(resource: string = "Resource") {
     super(`${resource} not found`, 404, "NOT_FOUND");
+    this.resource = resource;
   }
 }
 

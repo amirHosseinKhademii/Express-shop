@@ -1,4 +1,4 @@
-import { AppError, ValidationError } from "../utils/errors.js";
+import { AppError, NotFoundError, ValidationError } from "../utils/errors.js";
 export const errorHandler = (err, _req, res, _next) => {
     if (err instanceof AppError) {
         res.status(err.statusCode).json({
@@ -8,6 +8,7 @@ export const errorHandler = (err, _req, res, _next) => {
             ...(err instanceof ValidationError && err.details
                 ? { details: err.details }
                 : {}),
+            ...(err instanceof NotFoundError ? { resource: err.resource } : {}),
         });
         return;
     }

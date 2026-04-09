@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from "express";
+import { adminRoutes } from "./admin.js";
+import { shopRoutes } from "./shop.js";
 
 const router = Router();
 
@@ -23,5 +25,9 @@ router.get("/health", (_req: Request, res: Response<HealthResponse>) => {
     memoryUsage: { heapUsed, heapTotal, rss },
   });
 });
+
+router.use("/admin", adminRoutes);
+
+router.use("/shop", shopRoutes);
 
 export default router;
