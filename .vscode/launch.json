@@ -1,0 +1,54 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug server (TypeScript / tsx)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--import", "tsx"],
+      "args": ["${workspaceFolder}/src/server.ts"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PORT": "4000" },
+      "console": "internalConsole",
+      "killBehavior": "forceful",
+      "restart": false,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": {
+        "group": "server",
+        "order": 1
+      }
+    },
+    {
+      "name": "Debug server (compiled JS)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/dist/src/server.js",
+      "cwd": "${workspaceFolder}",
+      "env": { "PORT": "4000" },
+      "preLaunchTask": "npm: build",
+      "console": "internalConsole",
+      "killBehavior": "forceful",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": {
+        "group": "server",
+        "order": 2
+      }
+    },
+    {
+      "name": "Attach to running Node (port 9229)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "${workspaceFolder}",
+      "continueOnAttach": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": {
+        "group": "attach",
+        "order": 10
+      }
+    }
+  ]
+}

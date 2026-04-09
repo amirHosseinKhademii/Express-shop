@@ -2,10 +2,9 @@ import { Router, type Request, type Response } from "express";
 
 const router = Router();
 
-router.post("/add-product", (req: Request, res: Response): void => {
+router.get("/", (_req: Request, res: Response): void => {
   try {
-    console.log({ body: req.body });
-    res.json({ message: "Hello user" });
+    res.json({ message: "Hello admin" });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
