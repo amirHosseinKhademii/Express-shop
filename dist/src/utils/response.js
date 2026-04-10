@@ -43,5 +43,26 @@ export const ApiResponse = {
         };
         return res.json(body);
     },
+    notFound(res, message) {
+        return ApiResponse.error(res, "NOT_FOUND", message, 404);
+    },
+    badRequest(res, message) {
+        return ApiResponse.error(res, "BAD_REQUEST", message, 400);
+    },
+    unauthorized(res, message) {
+        return ApiResponse.error(res, "UNAUTHORIZED", message, 401);
+    },
+    forbidden(res, message) {
+        return ApiResponse.error(res, "FORBIDDEN", message, 403);
+    },
+    internalServerError(res, message) {
+        return ApiResponse.error(res, "INTERNAL_SERVER_ERROR", message, 500);
+    },
+    serviceUnavailable(res, message) {
+        return ApiResponse.error(res, "SERVICE_UNAVAILABLE", message, 503);
+    },
+    gatewayTimeout(res, message) {
+        return ApiResponse.error(res, "GATEWAY_TIMEOUT", message, 504);
+    },
 };
 //# sourceMappingURL=response.js.map

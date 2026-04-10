@@ -68,7 +68,13 @@ export const ApiResponse = {
     return res.status(statusCode).json(body);
   },
 
-  paginated<T>(res: Response, data: T[], page: number, limit: number, total: number) {
+  paginated<T>(
+    res: Response,
+    data: T[],
+    page: number,
+    limit: number,
+    total: number,
+  ) {
     const body: PaginatedResponse<T> = {
       status: "success",
       requestId: (res.req as Request).requestId,
@@ -81,5 +87,33 @@ export const ApiResponse = {
       },
     };
     return res.json(body);
+  },
+
+  notFound(res: Response, message: string) {
+    return ApiResponse.error(res, "NOT_FOUND", message, 404);
+  },
+
+  badRequest(res: Response, message: string) {
+    return ApiResponse.error(res, "BAD_REQUEST", message, 400);
+  },
+
+  unauthorized(res: Response, message: string) {
+    return ApiResponse.error(res, "UNAUTHORIZED", message, 401);
+  },
+
+  forbidden(res: Response, message: string) {
+    return ApiResponse.error(res, "FORBIDDEN", message, 403);
+  },
+
+  internalServerError(res: Response, message: string) {
+    return ApiResponse.error(res, "INTERNAL_SERVER_ERROR", message, 500);
+  },
+
+  serviceUnavailable(res: Response, message: string) {
+    return ApiResponse.error(res, "SERVICE_UNAVAILABLE", message, 503);
+  },
+
+  gatewayTimeout(res: Response, message: string) {
+    return ApiResponse.error(res, "GATEWAY_TIMEOUT", message, 504);
   },
 };

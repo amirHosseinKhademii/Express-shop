@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { getProducts, addProduct } from "../controllers/shop.controller.js";
+import { validateRequest } from "../middleware/validate-request.js";
+import { productIdParamSchema } from "../schemas/product.schema.js";
+import { getProducts, getProductById } from "../controllers/shop.controller.js";
 const router = Router();
 router.get("/", getProducts);
-router.post("/add-product", addProduct);
+router.get("/:id", validateRequest(productIdParamSchema), getProductById);
 export { router as shopRoutes };
 //# sourceMappingURL=shop.js.map
