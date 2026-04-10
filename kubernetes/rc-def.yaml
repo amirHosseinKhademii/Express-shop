@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-rc1
+  labels:
+    app: myapp-rc1
+    key: value
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: express-init
+      tier: api
+  template:
+    metadata:
+      name: express-init
+      labels:
+        app: express-init
+        tier: api
+    spec:
+      containers:
+        - name: express-init
+          image: 0012535540/express-init
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 3000
+
