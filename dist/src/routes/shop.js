@@ -1,12 +1,7 @@
 import { Router } from "express";
+import { getProducts, addProduct } from "../controllers/shop.controller.js";
 const router = Router();
-router.get("/", (_req, res) => {
-    try {
-        res.json({ message: "Hello shop" });
-    }
-    catch (error) {
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
+router.get("/", getProducts);
+router.post("/add-product", addProduct);
 export { router as shopRoutes };
 //# sourceMappingURL=shop.js.map
