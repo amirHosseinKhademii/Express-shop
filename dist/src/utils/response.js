@@ -1,6 +1,11 @@
+const isProduction = () => process.env["NODE_ENV"] === "production";
 export const ApiResponse = {
     success(res, data, message, statusCode = 200) {
-        const body = { status: "success", data };
+        const body = {
+            status: "success",
+            requestId: res.req.requestId,
+            data,
+        };
         if (message)
             body.message = message;
         return res.status(statusCode).json(body);
@@ -11,15 +16,23 @@ export const ApiResponse = {
     noContent(res) {
         return res.status(204).send();
     },
-    error(res, code, message, statusCode = 500, details) {
-        const body = { status: "error", code, message };
+    error(res, code, message, statusCode = 500, details, error) {
+        const body = {
+            status: "error",
+            requestId: res.req.requestId,
+            code,
+            message,
+        };
         if (details)
             body.details = details;
+        if (!isProduction() && error?.stack)
+            body.stack = error.stack;
         return res.status(statusCode).json(body);
     },
     paginated(res, data, page, limit, total) {
         const body = {
             status: "success",
+            requestId: res.req.requestId,
             data,
             pagination: {
                 page,
