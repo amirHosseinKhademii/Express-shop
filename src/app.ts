@@ -8,6 +8,7 @@ import { apiLimiter } from "./middleware/rate-limit.js";
 import { requestTimeout } from "./middleware/timeout.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
+import { attachUser } from "./middleware/attach-user.js";
 import routes from "./routes/index.js";
 
 export const createApp = (): Express => {
@@ -64,6 +65,7 @@ export const createApp = (): Express => {
 
   // Mount all /api routes behind the rate limiter:
   // 100 requests per 15 min per IP. Prevents brute-force and abuse.
+  app.use(attachUser);
   app.use("/api", apiLimiter, routes);
 
   // Centralized error handler — must be registered LAST so it catches

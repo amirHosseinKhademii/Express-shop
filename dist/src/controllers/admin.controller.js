@@ -3,7 +3,7 @@ import { ApiResponse } from "../utils/response.js";
 import { NotFoundError, ConflictError } from "../utils/errors.js";
 import { parseId } from "../utils/parse-id.js";
 import { pickDefined } from "../utils/pick-defined.js";
-import { Product } from "../models/product.model.js";
+import { Product } from "../models/index.js";
 import { sequelize } from "../utils/sequelize.js";
 const ALLOWED_FIELDS = ["title", "price", "description"];
 const RESPONSE_ATTRIBUTES = ["id", "title", "price", "description", "createdAt", "updatedAt"];

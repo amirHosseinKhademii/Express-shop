@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/response.js";
 import { NotFoundError } from "../utils/errors.js";
 import { parsePagination } from "../utils/pagination.js";
 import { parseId } from "../utils/parse-id.js";
-import { Product } from "../models/product.model.js";
+import { Product } from "../models/index.js";
 
 const PRODUCT_ATTRIBUTES = ["id", "title", "price", "description"] as const;
 

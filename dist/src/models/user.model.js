@@ -1,31 +1,26 @@
 import { sequelize } from "../utils/sequelize.js";
 import { DataTypes } from "sequelize";
-export const Product = sequelize.define("product", {
+export const User = sequelize.define("user", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-    },
-    userId: {
-        type: DataTypes.INTEGER,
         allowNull: false,
-        field: "user_id",
-        references: {
-            model: "users",
-            key: "id",
-        },
     },
-    title: {
+    email: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: true,
+        },
     },
-    price: {
-        type: DataTypes.DOUBLE,
+    name: {
+        type: DataTypes.STRING,
         allowNull: false,
-    },
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
+        validate: {
+            len: [3, 30],
+        },
     },
     createdAt: {
         type: DataTypes.DATE,
@@ -38,4 +33,4 @@ export const Product = sequelize.define("product", {
         defaultValue: DataTypes.NOW,
     },
 });
-//# sourceMappingURL=product.model.js.map
+//# sourceMappingURL=user.model.js.map

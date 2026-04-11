@@ -4,8 +4,9 @@ import { config } from "../config/index.js";
 import { UnauthorizedError } from "../utils/errors.js";
 
 interface JWTPayload {
-  userId: string;
+  id: number;
   email: string;
+  name: string;
 }
 
 export const authenticate = async (
