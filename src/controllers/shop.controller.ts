@@ -47,12 +47,29 @@ export const addProductToCart = (
   next: NextFunction,
 ): void => {
   try {
-    const product = products.find((p) => p.id === req.body["productId"]);
-    const cart = carts.find((c) => c.id === req.params["cartId"]);
-    if (!product) throw new NotFoundError("Product");
+    const productId = req.body["productId"];
+    const cartId = req.params["cartId"];
+
+    const cart = carts.find((c) => c.id === cartId);
     if (!cart) throw new NotFoundError("Cart");
-    cart.products.push(product);
-    ApiResponse.success(res, product);
+
+    const product = products.find((p) => p.id === productId);
+    if (!product) throw new NotFoundError("Product");
+
+    //find existing product in cart
+    const existingProduct = cart?.products.find(
+      (p) => p.product.id === productId,
+    );
+    if (existingProduct) {
+      existingProduct.quantity += 1;
+      cart.total += product.price;
+      ApiResponse.success(res, existingProduct);
+      return;
+    }
+
+    cart.products.push({ product, quantity: 1 });
+    cart.total += product.price;
+    ApiResponse.success(res, cart);
   } catch (error) {
     next(error);
   }

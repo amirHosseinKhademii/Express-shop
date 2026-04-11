@@ -13,7 +13,10 @@ export const products: Product[] = [
 
 export interface Cart {
   id: string;
-  products: Product[];
+  products: { product: Product; quantity: number }[];
+  total: number;
 }
 
-export const carts: Cart[] = [{ id: crypto.randomUUID(), products: [] }];
+export const carts: Cart[] = [
+  { id: crypto.randomUUID(), products: [], total: 0 },
+];
