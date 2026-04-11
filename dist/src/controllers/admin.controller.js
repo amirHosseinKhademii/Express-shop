@@ -1,20 +1,29 @@
-import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
+import { ForeignKeyConstraintError, UniqueConstraintError, } from "sequelize";
 import { ApiResponse } from "../utils/response.js";
-import { NotFoundError, ConflictError } from "../utils/errors.js";
+import { NotFoundError, ConflictError, UnauthorizedError, ForbiddenError, } from "../utils/errors.js";
 import { parseId } from "../utils/parse-id.js";
 import { pickDefined } from "../utils/pick-defined.js";
 import { Product } from "../models/index.js";
 import { sequelize } from "../utils/sequelize.js";
 const ALLOWED_FIELDS = ["title", "price", "description"];
-const RESPONSE_ATTRIBUTES = ["id", "title", "price", "description", "createdAt", "updatedAt"];
+const RESPONSE_ATTRIBUTES = [
+    "id",
+    "userId",
+    "title",
+    "price",
+    "description",
+    "createdAt",
+    "updatedAt",
+];
 export const addProduct = async (req, res, next) => {
     try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
         const fields = pickDefined(req.body, ALLOWED_FIELDS);
-        const product = await Product.create(fields, {
+        const created = await req.user.createProduct(fields, {
             fields: [...ALLOWED_FIELDS],
-            returning: true,
         });
-        const plain = await Product.findByPk(product.get("id"), {
+        const plain = await Product.findByPk(created.get("id"), {
             attributes: [...RESPONSE_ATTRIBUTES],
             raw: true,
         });
@@ -30,11 +39,16 @@ export const addProduct = async (req, res, next) => {
 };
 export const updateProduct = async (req, res, next) => {
     try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
         const id = parseId(req.params["id"], "Product");
         const product = await Product.findOne({
             where: { id },
             rejectOnEmpty: new NotFoundError("Product"),
         });
+        if (product.get("userId") !== req.user.id) {
+            throw new ForbiddenError("You can only update your own products");
+        }
         const fields = pickDefined(req.body, ALLOWED_FIELDS);
         if (Object.keys(fields).length > 0) {
             await product.update(fields, { fields: [...ALLOWED_FIELDS] });
@@ -55,12 +69,19 @@ export const updateProduct = async (req, res, next) => {
 };
 export const deleteProduct = async (req, res, next) => {
     try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
         const id = parseId(req.params["id"], "Product");
-        const deleted = await sequelize.transaction(async (t) => {
-            return Product.destroy({ where: { id }, transaction: t });
+        const product = await Product.findOne({
+            where: { id },
+            rejectOnEmpty: new NotFoundError("Product"),
         });
-        if (deleted === 0)
-            throw new NotFoundError("Product");
+        if (product.get("userId") !== req.user.id) {
+            throw new ForbiddenError("You can only delete your own products");
+        }
+        await sequelize.transaction(async (t) => {
+            await product.destroy({ transaction: t });
+        });
         ApiResponse.noContent(res);
     }
     catch (error) {

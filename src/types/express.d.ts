@@ -1,11 +1,27 @@
+import type { Model, FindOptions, CreateOptions, DestroyOptions } from "sequelize";
+
+interface UserAttributes {
+  id: number;
+  email: string;
+  name: string;
+}
+
+type UserInstance = Model<UserAttributes, Partial<UserAttributes>> &
+  UserAttributes & {
+    getProducts: (options?: FindOptions) => Promise<Model[]>;
+    createProduct: (
+      values: Record<string, unknown>,
+      options?: CreateOptions,
+    ) => Promise<Model>;
+    countProducts: (options?: FindOptions) => Promise<number>;
+    hasProduct: (product: Model | number, options?: FindOptions) => Promise<boolean>;
+    removeProduct: (product: Model | number, options?: DestroyOptions) => Promise<void>;
+  };
+
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: number;
-        email: string;
-        name: string;
-      };
+      user?: UserInstance;
       requestId?: string;
     }
   }

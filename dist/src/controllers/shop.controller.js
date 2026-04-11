@@ -1,21 +1,23 @@
 import { EmptyResultError } from "sequelize";
 import { ApiResponse } from "../utils/response.js";
-import { NotFoundError } from "../utils/errors.js";
+import { NotFoundError, UnauthorizedError } from "../utils/errors.js";
 import { parsePagination } from "../utils/pagination.js";
 import { parseId } from "../utils/parse-id.js";
 import { Product } from "../models/index.js";
 const PRODUCT_ATTRIBUTES = ["id", "title", "price", "description"];
 export const getProducts = async (req, res, next) => {
     try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
         const { page, limit, offset } = parsePagination(req);
-        const { count, rows } = await Product.findAndCountAll({
+        const products = await req.user.getProducts({
             attributes: [...PRODUCT_ATTRIBUTES],
             order: [["id", "ASC"]],
             limit,
             offset,
-            raw: true,
         });
-        ApiResponse.paginated(res, rows, page, limit, count);
+        const count = await req.user.countProducts();
+        ApiResponse.paginated(res, products, page, limit, count);
     }
     catch (error) {
         next(error);
@@ -23,10 +25,12 @@ export const getProducts = async (req, res, next) => {
 };
 export const getProductById = async (req, res, next) => {
     try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
         const id = parseId(req.params["id"], "Product");
         const product = await Product.findOne({
             attributes: [...PRODUCT_ATTRIBUTES],
-            where: { id },
+            where: { id, userId: req.user.id },
             rejectOnEmpty: new NotFoundError("Product"),
             raw: true,
         });

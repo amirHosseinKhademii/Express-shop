@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
+import type { Model } from "sequelize";
 import { User } from "../models/index.js";
 
-let cachedUser: { id: number; email: string; name: string } | null = null;
+let cachedUser: Model | null = null;
 
 export const attachUser = async (
   req: Request,
@@ -12,16 +13,15 @@ export const attachUser = async (
     if (!cachedUser) {
       const user = await User.findOne({
         attributes: ["id", "email", "name"],
-        raw: true,
       });
 
       if (user) {
-        cachedUser = user as unknown as { id: number; email: string; name: string };
+        cachedUser = user;
       }
     }
 
     if (cachedUser) {
-      req.user = cachedUser;
+      req.user = cachedUser as Request["user"];
     }
 
     next();

@@ -2,11 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config/index.js";
 import { UnauthorizedError } from "../utils/errors.js";
+import { User } from "../models/index.js";
 
 interface JWTPayload {
   id: number;
   email: string;
-  name: string;
 }
 
 export const authenticate = async (
@@ -22,7 +22,14 @@ export const authenticate = async (
     }
 
     const payload = jwt.verify(token, config.jwt.secret) as JWTPayload;
-    req.user = payload;
+
+    const user = await User.findByPk(payload.id, {
+      attributes: ["id", "email", "name"],
+    });
+
+    if (!user) throw new UnauthorizedError("User no longer exists");
+
+    req.user = user as Request["user"];
     next();
   } catch (error) {
     if (error instanceof UnauthorizedError) {

@@ -5,7 +5,6 @@ export const attachUser = async (req, _res, next) => {
         if (!cachedUser) {
             const user = await User.findOne({
                 attributes: ["id", "email", "name"],
-                raw: true,
             });
             if (user) {
                 cachedUser = user;
