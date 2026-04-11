@@ -1,30 +1,11 @@
-import { Router, type Request, type Response } from "express";
+import { Router } from "express";
 import { adminRoutes } from "./admin.js";
 import { shopRoutes } from "./shop.js";
+import { getHealth } from "../controllers/health.controller.js";
 
 const router = Router();
 
-interface HealthResponse {
-  status: "ok" | "degraded";
-  timestamp: string;
-  uptime: number;
-  memoryUsage: {
-    heapUsed: number;
-    heapTotal: number;
-    rss: number;
-  };
-}
-
-router.get("/health", (_req: Request, res: Response<HealthResponse>) => {
-  const { heapUsed, heapTotal, rss } = process.memoryUsage();
-
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memoryUsage: { heapUsed, heapTotal, rss },
-  });
-});
+router.get("/health", getHealth);
 
 router.use("/admin", adminRoutes);
 
