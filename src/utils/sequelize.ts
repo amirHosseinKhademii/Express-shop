@@ -37,6 +37,7 @@ export const sequelize = new Sequelize(
 export const connectSequelize = async (): Promise<void> => {
   await sequelize.authenticate();
   await sequelize.sync();
+
   console.log("Sequelize connected");
 };
 

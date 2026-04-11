@@ -6,6 +6,6 @@ const router = Router();
 router.get("/", getProducts);
 router.get("/cart", getCart);
 router.get("/:id", validateRequest(productIdParamSchema), getProductById);
-router.post("/cart/:cartId", validateRequest(addProductToCartSchema), addProductToCart);
+router.post("/cart", validateRequest(addProductToCartSchema), addProductToCart);
 export { router as shopRoutes };
 //# sourceMappingURL=shop.js.map

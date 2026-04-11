@@ -29,10 +29,20 @@ export const productIdParamSchema = z.object({
 });
 
 export const addProductToCartSchema = z.object({
-  params: z.object({
-    cartId: z.string().uuid("Invalid cart ID"),
-  }),
   body: z.object({
-    productId: z.string().uuid("Invalid product ID"),
+    productId: z
+      .number({
+        required_error: "Product ID is required",
+        invalid_type_error: "Product ID must be a number",
+      })
+      .int("Product ID must be a whole number")
+      .positive("Product ID must be a positive integer"),
+    quantity: z
+      .number({ invalid_type_error: "Quantity must be a number" })
+      .int("Quantity must be a whole number")
+      .min(1, "Quantity must be at least 1")
+      .max(999, "Quantity cannot exceed 999")
+      .optional()
+      .default(1),
   }),
 });

@@ -84,33 +84,25 @@ export declare const productIdParamSchema: z.ZodObject<{
     };
 }>;
 export declare const addProductToCartSchema: z.ZodObject<{
-    params: z.ZodObject<{
-        cartId: z.ZodString;
-    }, "strip", z.ZodTypeAny, {
-        cartId: string;
-    }, {
-        cartId: string;
-    }>;
     body: z.ZodObject<{
-        productId: z.ZodString;
+        productId: z.ZodNumber;
+        quantity: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
     }, "strip", z.ZodTypeAny, {
-        productId: string;
+        productId: number;
+        quantity: number;
     }, {
-        productId: string;
+        productId: number;
+        quantity?: number | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
-    params: {
-        cartId: string;
-    };
     body: {
-        productId: string;
+        productId: number;
+        quantity: number;
     };
 }, {
-    params: {
-        cartId: string;
-    };
     body: {
-        productId: string;
+        productId: number;
+        quantity?: number | undefined;
     };
 }>;
 //# sourceMappingURL=product.schema.d.ts.map

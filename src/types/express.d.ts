@@ -16,6 +16,11 @@ type UserInstance = Model<UserAttributes, Partial<UserAttributes>> &
     countProducts: (options?: FindOptions) => Promise<number>;
     hasProduct: (product: Model | number, options?: FindOptions) => Promise<boolean>;
     removeProduct: (product: Model | number, options?: DestroyOptions) => Promise<void>;
+    getCart: (options?: FindOptions) => Promise<Model | null>;
+    createCart: (
+      values?: Record<string, unknown>,
+      options?: CreateOptions,
+    ) => Promise<Model>;
   };
 
 declare global {
