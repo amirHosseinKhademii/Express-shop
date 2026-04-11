@@ -3,34 +3,42 @@ export declare const createProductSchema: z.ZodObject<{
     body: z.ZodObject<{
         title: z.ZodString;
         price: z.ZodNumber;
+        description: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         title: string;
         price: number;
+        description?: string | undefined;
     }, {
         title: string;
         price: number;
+        description?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
         title: string;
         price: number;
+        description?: string | undefined;
     };
 }, {
     body: {
         title: string;
         price: number;
+        description?: string | undefined;
     };
 }>;
 export declare const updateProductSchema: z.ZodObject<{
     body: z.ZodObject<{
         title: z.ZodOptional<z.ZodString>;
         price: z.ZodOptional<z.ZodNumber>;
+        description: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         title?: string | undefined;
         price?: number | undefined;
+        description?: string | undefined;
     }, {
         title?: string | undefined;
         price?: number | undefined;
+        description?: string | undefined;
     }>;
     params: z.ZodObject<{
         id: z.ZodString;
@@ -46,6 +54,7 @@ export declare const updateProductSchema: z.ZodObject<{
     body: {
         title?: string | undefined;
         price?: number | undefined;
+        description?: string | undefined;
     };
 }, {
     params: {
@@ -54,6 +63,7 @@ export declare const updateProductSchema: z.ZodObject<{
     body: {
         title?: string | undefined;
         price?: number | undefined;
+        description?: string | undefined;
     };
 }>;
 export declare const productIdParamSchema: z.ZodObject<{

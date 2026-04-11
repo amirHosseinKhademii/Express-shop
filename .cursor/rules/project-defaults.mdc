@@ -15,6 +15,7 @@ Always reference these project skills when relevant:
 - `.agents/skills/mongoose` — MongoDB schemas, ODM patterns
 - `.agents/skills/prisma-postgres` — PostgreSQL schema, migrations, queries
 - `.agents/skills/mysql` — MySQL/MariaDB schema, indexing, query tuning, transactions
+- `.agents/skills/sequelize` — Sequelize ORM models, associations, migrations, queries
 
 ## TypeScript Rules
 

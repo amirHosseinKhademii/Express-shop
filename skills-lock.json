@@ -25,6 +25,11 @@
       "source": "prisma/skills",
       "sourceType": "github",
       "computedHash": "d090d1206fb6a2dd9f7b9f658d851ccd653132512c53c6e0a164110d9ee80005"
+    },
+    "sequelize": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "computedHash": "5ebc2439de2c788660ec8f48178b4828da03ab118900ec9f0c36addc1336a2a8"
     }
   }
 }

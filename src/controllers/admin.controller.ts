@@ -1,9 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
-import type { ResultSetHeader, RowDataPacket } from "mysql2";
+import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
 import { ApiResponse } from "../utils/response.js";
-import { NotFoundError } from "../utils/errors.js";
-import { poolPromise } from "../utils/database.js";
-import { ProductRow } from "./shop.controller.js";
+import { NotFoundError, ConflictError } from "../utils/errors.js";
+import { parseId } from "../utils/parse-id.js";
+import { pickDefined } from "../utils/pick-defined.js";
+import { Product } from "../models/product.model.js";
+import { sequelize } from "../utils/sequelize.js";
+
+const ALLOWED_FIELDS = ["title", "price", "description"] as const;
+const RESPONSE_ATTRIBUTES = ["id", "title", "price", "description", "createdAt", "updatedAt"] as const;
 
 export const addProduct = async (
   req: Request,
@@ -11,20 +16,24 @@ export const addProduct = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { title, price, description } = req.body;
+    const fields = pickDefined(req.body, ALLOWED_FIELDS);
 
-    const [result] = await poolPromise.execute<ResultSetHeader>(
-      "INSERT INTO products (title, price, description) VALUES (?, ?, ?)",
-      [title, price, description],
-    );
+    const product = await Product.create(fields, {
+      fields: [...ALLOWED_FIELDS],
+      returning: true,
+    });
 
-    const [rows] = await poolPromise.execute<ProductRow[]>(
-      "SELECT id, title, price, description FROM products WHERE id = ?",
-      [result.insertId],
-    );
+    const plain = await Product.findByPk(product.get("id") as number, {
+      attributes: [...RESPONSE_ATTRIBUTES],
+      raw: true,
+    });
 
-    ApiResponse.created(res, rows[0], "Product added");
+    ApiResponse.created(res, plain, "Product added");
   } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      next(new ConflictError("Product with this title already exists"));
+      return;
+    }
     next(error);
   }
 };
@@ -35,47 +44,30 @@ export const updateProduct = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const id = req.params["id"] as string;
-    const { title, price } = req.body;
+    const id = parseId(req.params["id"], "Product");
 
-    const fields: string[] = [];
-    const values: (string | number)[] = [];
+    const product = await Product.findOne({
+      where: { id },
+      rejectOnEmpty: new NotFoundError("Product"),
+    });
 
-    if (title !== undefined) {
-      fields.push("title = ?");
-      values.push(title);
-    }
-    if (price !== undefined) {
-      fields.push("price = ?");
-      values.push(price);
+    const fields = pickDefined(req.body, ALLOWED_FIELDS);
+
+    if (Object.keys(fields).length > 0) {
+      await product.update(fields, { fields: [...ALLOWED_FIELDS] });
     }
 
-    if (fields.length === 0) {
-      const [existing] = await poolPromise.execute<ProductRow[]>(
-        "SELECT id, title, price, created_at, updated_at FROM products WHERE id = ?",
-        [id],
-      );
-      if (existing.length === 0) throw new NotFoundError("Product");
-      ApiResponse.success(res, existing[0], "Nothing to update");
+    const plain = await Product.findByPk(id, {
+      attributes: [...RESPONSE_ATTRIBUTES],
+      raw: true,
+    });
+
+    ApiResponse.success(res, plain, "Product updated");
+  } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      next(new ConflictError("Product with this title already exists"));
       return;
     }
-
-    values.push(id);
-
-    const [result] = await poolPromise.execute<ResultSetHeader>(
-      `UPDATE products SET ${fields.join(", ")} WHERE id = ?`,
-      values,
-    );
-
-    if (result.affectedRows === 0) throw new NotFoundError("Product");
-
-    const [rows] = await poolPromise.execute<ProductRow[]>(
-      "SELECT id, title, price, created_at, updated_at FROM products WHERE id = ?",
-      [id],
-    );
-
-    ApiResponse.success(res, rows[0], "Product updated");
-  } catch (error) {
     next(error);
   }
 };
@@ -86,17 +78,20 @@ export const deleteProduct = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const id = req.params["id"] as string;
+    const id = parseId(req.params["id"], "Product");
 
-    const [result] = await poolPromise.execute<ResultSetHeader>(
-      "DELETE FROM products WHERE id = ?",
-      [id],
-    );
+    const deleted = await sequelize.transaction(async (t) => {
+      return Product.destroy({ where: { id }, transaction: t });
+    });
 
-    if (result.affectedRows === 0) throw new NotFoundError("Product");
+    if (deleted === 0) throw new NotFoundError("Product");
 
     ApiResponse.noContent(res);
   } catch (error) {
+    if (error instanceof ForeignKeyConstraintError) {
+      next(new ConflictError("Cannot delete product — it is referenced by other records"));
+      return;
+    }
     next(error);
   }
 };

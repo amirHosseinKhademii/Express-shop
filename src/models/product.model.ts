@@ -1,22 +1,32 @@
-import crypto from "node:crypto";
+import { sequelize } from "../utils/sequelize.js";
+import { DataTypes } from "sequelize";
 
-export interface Product {
-  id: string;
-  title: string;
-  price: number;
-}
-
-export const products: Product[] = [
-  { id: crypto.randomUUID(), title: "Product 1", price: 100 },
-  { id: crypto.randomUUID(), title: "Product 2", price: 200 },
-];
-
-export interface Cart {
-  id: string;
-  products: { product: Product; quantity: number }[];
-  total: number;
-}
-
-export const carts: Cart[] = [
-  { id: crypto.randomUUID(), products: [], total: 0 },
-];
+export const Product = sequelize.define("product", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  price: {
+    type: DataTypes.DOUBLE,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
+});
