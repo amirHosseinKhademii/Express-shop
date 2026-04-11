@@ -1,20 +1,23 @@
 import { ApiResponse } from "../utils/response.js";
-import { products, carts } from "../models/product.model.js";
+import { carts, products } from "../models/product.model.js";
 import { NotFoundError } from "../utils/errors.js";
-export const getProducts = (_req, res, next) => {
+import { poolPromise } from "../utils/database.js";
+export const getProducts = async (_req, res, next) => {
     try {
-        ApiResponse.success(res, products);
+        const [rows] = await poolPromise.execute("SELECT id, title, price, description FROM products");
+        ApiResponse.success(res, rows);
     }
     catch (error) {
         next(error);
     }
 };
-export const getProductById = (req, res, next) => {
+export const getProductById = async (req, res, next) => {
     try {
-        const product = products.find((p) => p.id === req.params["id"]);
-        if (!product)
+        const id = req.params["id"];
+        const [rows] = await poolPromise.execute("SELECT id, title, price, description FROM products WHERE id = ?", [id]);
+        if (rows.length === 0)
             throw new NotFoundError("Product");
-        ApiResponse.success(res, product);
+        ApiResponse.success(res, rows[0]);
     }
     catch (error) {
         next(error);

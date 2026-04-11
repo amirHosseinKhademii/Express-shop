@@ -1,39 +1,55 @@
-import crypto from "node:crypto";
 import { ApiResponse } from "../utils/response.js";
-import { products } from "../models/product.model.js";
 import { NotFoundError } from "../utils/errors.js";
-export const addProduct = (req, res, next) => {
+import { poolPromise } from "../utils/database.js";
+export const addProduct = async (req, res, next) => {
     try {
-        const product = {
-            id: crypto.randomUUID(),
-            title: req.body.title,
-            price: req.body.price,
-        };
-        products.push(product);
-        ApiResponse.created(res, product, "Product added");
+        const { title, price } = req.body;
+        const [result] = await poolPromise.execute("INSERT INTO products (title, price) VALUES (?, ?)", [title, price]);
+        const [rows] = await poolPromise.execute("SELECT id, title, price, created_at, updated_at FROM products WHERE id = ?", [result.insertId]);
+        ApiResponse.created(res, rows[0], "Product added");
     }
     catch (error) {
         next(error);
     }
 };
-export const updateProduct = (req, res, next) => {
+export const updateProduct = async (req, res, next) => {
     try {
-        const index = products.findIndex((p) => p.id === req.params["id"]);
-        if (index === -1)
+        const id = req.params["id"];
+        const { title, price } = req.body;
+        const fields = [];
+        const values = [];
+        if (title !== undefined) {
+            fields.push("title = ?");
+            values.push(title);
+        }
+        if (price !== undefined) {
+            fields.push("price = ?");
+            values.push(price);
+        }
+        if (fields.length === 0) {
+            const [existing] = await poolPromise.execute("SELECT id, title, price, created_at, updated_at FROM products WHERE id = ?", [id]);
+            if (existing.length === 0)
+                throw new NotFoundError("Product");
+            ApiResponse.success(res, existing[0], "Nothing to update");
+            return;
+        }
+        values.push(id);
+        const [result] = await poolPromise.execute(`UPDATE products SET ${fields.join(", ")} WHERE id = ?`, values);
+        if (result.affectedRows === 0)
             throw new NotFoundError("Product");
-        products[index] = { ...products[index], ...req.body, id: products[index].id };
-        ApiResponse.success(res, products[index], "Product updated");
+        const [rows] = await poolPromise.execute("SELECT id, title, price, created_at, updated_at FROM products WHERE id = ?", [id]);
+        ApiResponse.success(res, rows[0], "Product updated");
     }
     catch (error) {
         next(error);
     }
 };
-export const deleteProduct = (req, res, next) => {
+export const deleteProduct = async (req, res, next) => {
     try {
-        const index = products.findIndex((p) => p.id === req.params["id"]);
-        if (index === -1)
+        const id = req.params["id"];
+        const [result] = await poolPromise.execute("DELETE FROM products WHERE id = ?", [id]);
+        if (result.affectedRows === 0)
             throw new NotFoundError("Product");
-        products.splice(index, 1);
         ApiResponse.noContent(res);
     }
     catch (error) {

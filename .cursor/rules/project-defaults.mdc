@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Project Defaults
 
-This is an Express.js + TypeScript backend with **Mongoose** (MongoDB) and **Prisma** (PostgreSQL).
+This is an Express.js + TypeScript backend with **Mongoose** (MongoDB), **Prisma** (PostgreSQL), and **MySQL/MariaDB**.
 
 ## Skills to Follow
 
@@ -14,6 +14,7 @@ Always reference these project skills when relevant:
 - `.agents/skills/nodejs-backend-patterns` — layered architecture, DI, auth, caching
 - `.agents/skills/mongoose` — MongoDB schemas, ODM patterns
 - `.agents/skills/prisma-postgres` — PostgreSQL schema, migrations, queries
+- `.agents/skills/mysql` — MySQL/MariaDB schema, indexing, query tuning, transactions
 
 ## TypeScript Rules
 

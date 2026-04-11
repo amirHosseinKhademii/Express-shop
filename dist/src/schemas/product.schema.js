@@ -16,7 +16,7 @@ export const updateProductSchema = z.object({
 });
 export const productIdParamSchema = z.object({
     params: z.object({
-        id: z.string().uuid("Invalid product ID"),
+        id: z.string().min(1, "Product ID is required"),
     }),
 });
 export const addProductToCartSchema = z.object({

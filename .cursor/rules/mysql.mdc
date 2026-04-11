@@ -1,0 +1,22 @@
+---
+description: MySQL / MariaDB database queries and schema
+globs: src/**/*.ts
+---
+
+# MySQL
+
+Follow the skill: `.agents/skills/mysql`
+
+## Conventions
+
+- Use the shared pool from `src/utils/database.ts` — never create new connections elsewhere
+- Always release connections back to the pool (`connection.release()` in a `finally` block)
+- Use parameterized queries (`?` placeholders) to prevent SQL injection — never interpolate values
+- Use `poolPromise.execute()` for simple queries (auto-prepares statements)
+- Use `poolPromise.getConnection()` + `connection.beginTransaction()` for multi-step writes
+- Handle errors: catch `ER_DUP_ENTRY` (code 1062) for unique constraint violations
+- Prefer `BIGINT UNSIGNED AUTO_INCREMENT` for primary keys
+- Always use `utf8mb4` charset
+- Add indexes for columns used in `WHERE`, `JOIN`, and `ORDER BY`
+- Use `EXPLAIN` to verify query plans before deploying
+- Use transactions for any operation that touches multiple tables
