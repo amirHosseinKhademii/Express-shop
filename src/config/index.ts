@@ -7,6 +7,11 @@ export const config = {
   database: {
     postgresUrl: process.env["DATABASE_URL"] ?? "",
     mongoUri: process.env["MONGODB_URI"] ?? "",
+    mysqlHost: process.env["DB_HOST"] ?? "127.0.0.1",
+    mysqlPort: parseInt(process.env["DB_PORT"] ?? "3306", 10),
+    mysqlUser: process.env["DB_USER"] ?? "root",
+    mysqlPassword: process.env["DB_PASSWORD"] ?? "",
+    mysqlDatabase: process.env["DB_NAME"] ?? "express-init",
   },
 
   jwt: {

@@ -73,4 +73,34 @@ export declare const productIdParamSchema: z.ZodObject<{
         id: string;
     };
 }>;
+export declare const addProductToCartSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        cartId: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        cartId: string;
+    }, {
+        cartId: string;
+    }>;
+    body: z.ZodObject<{
+        productId: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        productId: string;
+    }, {
+        productId: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    params: {
+        cartId: string;
+    };
+    body: {
+        productId: string;
+    };
+}, {
+    params: {
+        cartId: string;
+    };
+    body: {
+        productId: string;
+    };
+}>;
 //# sourceMappingURL=product.schema.d.ts.map

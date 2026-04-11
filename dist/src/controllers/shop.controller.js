@@ -1,5 +1,5 @@
 import { ApiResponse } from "../utils/response.js";
-import { products } from "../models/product.model.js";
+import { products, carts } from "../models/product.model.js";
 import { NotFoundError } from "../utils/errors.js";
 export const getProducts = (_req, res, next) => {
     try {
@@ -15,6 +15,40 @@ export const getProductById = (req, res, next) => {
         if (!product)
             throw new NotFoundError("Product");
         ApiResponse.success(res, product);
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const getCart = (_req, res, next) => {
+    try {
+        ApiResponse.success(res, carts);
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const addProductToCart = (req, res, next) => {
+    try {
+        const productId = req.body["productId"];
+        const cartId = req.params["cartId"];
+        const cart = carts.find((c) => c.id === cartId);
+        if (!cart)
+            throw new NotFoundError("Cart");
+        const product = products.find((p) => p.id === productId);
+        if (!product)
+            throw new NotFoundError("Product");
+        //find existing product in cart
+        const existingProduct = cart?.products.find((p) => p.product.id === productId);
+        if (existingProduct) {
+            existingProduct.quantity += 1;
+            cart.total += product.price;
+            ApiResponse.success(res, existingProduct);
+            return;
+        }
+        cart.products.push({ product, quantity: 1 });
+        cart.total += product.price;
+        ApiResponse.success(res, cart);
     }
     catch (error) {
         next(error);

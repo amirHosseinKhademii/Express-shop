@@ -19,4 +19,12 @@ export const productIdParamSchema = z.object({
         id: z.string().uuid("Invalid product ID"),
     }),
 });
+export const addProductToCartSchema = z.object({
+    params: z.object({
+        cartId: z.string().uuid("Invalid cart ID"),
+    }),
+    body: z.object({
+        productId: z.string().uuid("Invalid product ID"),
+    }),
+});
 //# sourceMappingURL=product.schema.js.map

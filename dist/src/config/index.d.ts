@@ -5,6 +5,11 @@ export declare const config: {
     readonly database: {
         readonly postgresUrl: string;
         readonly mongoUri: string;
+        readonly mysqlHost: string;
+        readonly mysqlPort: number;
+        readonly mysqlUser: string;
+        readonly mysqlPassword: string;
+        readonly mysqlDatabase: string;
     };
     readonly jwt: {
         readonly secret: string;
