@@ -1,16 +1,18 @@
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
-import { connectSequelize, closeSequelize } from "./utils/sequelize.js";
+import { closeMongo, connectMongo } from "./utils/mongodb.js";
 const start = async () => {
     const app = createApp();
-    await connectSequelize();
+    // await connectSequelize();
+    await connectMongo();
     const server = app.listen(config.port, () => {
         console.log(`Server running on port ${config.port} [${config.env}]`);
     });
     const shutdown = async (signal) => {
         console.log(`\n${signal} received. Shutting down gracefully...`);
         server.close(async () => {
-            await closeSequelize();
+            // await closeSequelize();
+            await closeMongo();
             console.log("Server closed");
             process.exit(0);
         });

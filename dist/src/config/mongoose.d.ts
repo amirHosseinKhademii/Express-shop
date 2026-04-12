@@ -1,3 +1,2 @@
-export declare const connectMongo: () => Promise<void>;
-export declare const closeMongo: () => Promise<void>;
+export {};
 //# sourceMappingURL=mongoose.d.ts.map

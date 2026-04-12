@@ -1,13 +1,18 @@
 import type { Request } from "express";
 import type { ProductInstance } from "../types/express.js";
 import { Product } from "../models/index.js";
-import { sequelize } from "../utils/sequelize.js";
+import { sequelize } from "../database/sequelize.js";
 import { NotFoundError, ForbiddenError } from "../utils/errors.js";
 import { pickDefined } from "../utils/pick-defined.js";
 
 type User = NonNullable<Request["user"]>;
 
-export const PRODUCT_ATTRIBUTES = ["id", "title", "price", "description"] as const;
+export const PRODUCT_ATTRIBUTES = [
+  "id",
+  "title",
+  "price",
+  "description",
+] as const;
 
 const ALLOWED_FIELDS = ["title", "price", "description"] as const;
 const RESPONSE_ATTRIBUTES = [
@@ -69,7 +74,10 @@ export async function createProduct(
   return plain as unknown as ProductInstance;
 }
 
-async function findOwnedProduct(user: User, productId: number): Promise<ProductInstance> {
+async function findOwnedProduct(
+  user: User,
+  productId: number,
+): Promise<ProductInstance> {
   const owns = await user.hasProduct(productId);
   if (!owns) throw new ForbiddenError("You can only modify your own products");
 

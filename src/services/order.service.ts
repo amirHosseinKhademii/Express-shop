@@ -1,11 +1,8 @@
 import type { Request } from "express";
 import type { Transaction } from "sequelize";
-import type {
-  OrderInstance,
-  ProductInstance,
-} from "../types/express.js";
+import type { OrderInstance, ProductInstance } from "../types/express.js";
 import { Op } from "sequelize";
-import { sequelize } from "../utils/sequelize.js";
+import { sequelize } from "../database/sequelize.js";
 import { Order, Product, CartItem } from "../models/index.js";
 import { NotFoundError } from "../utils/errors.js";
 import { ValidationError } from "../utils/errors.js";
@@ -47,9 +44,9 @@ export async function createOrder(
   }
 
   const quantityMap = new Map(items.map((i) => [i.productId, i.quantity]));
-  const products = await Product.findAll({
+  const products = (await Product.findAll({
     where: { id: { [Op.in]: [...quantityMap.keys()] } },
-  }) as unknown as ProductInstance[];
+  })) as unknown as ProductInstance[];
 
   const order = await sequelize.transaction(async (t) => {
     const created = await user.createOrder({}, { transaction: t });
@@ -57,7 +54,9 @@ export async function createOrder(
     return created;
   });
 
-  return Order.findByPk(order.id, { include: ORDER_INCLUDE }) as Promise<OrderInstance | null>;
+  return Order.findByPk(order.id, {
+    include: ORDER_INCLUDE,
+  }) as Promise<OrderInstance | null>;
 }
 
 export async function createOrderFromCart(
@@ -76,9 +75,9 @@ export async function createOrderFromCart(
     cartProducts.map((p) => [p.id, p.cartItem!.quantity]),
   );
 
-  const products = await Product.findAll({
+  const products = (await Product.findAll({
     where: { id: { [Op.in]: [...quantityMap.keys()] } },
-  }) as unknown as ProductInstance[];
+  })) as unknown as ProductInstance[];
 
   const order = await sequelize.transaction(async (t) => {
     const created = await user.createOrder({}, { transaction: t });
@@ -92,7 +91,9 @@ export async function createOrderFromCart(
     return created;
   });
 
-  return Order.findByPk(order.id, { include: ORDER_INCLUDE }) as Promise<OrderInstance | null>;
+  return Order.findByPk(order.id, {
+    include: ORDER_INCLUDE,
+  }) as Promise<OrderInstance | null>;
 }
 
 async function addProductsToOrder(

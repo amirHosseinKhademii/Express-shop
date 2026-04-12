@@ -12,7 +12,9 @@ This is an Express.js + TypeScript backend with **Mongoose** (MongoDB), **Prisma
 Always reference these project skills when relevant:
 - `.agents/skills/express-rest-api` — routing, middleware, validation, error handling
 - `.agents/skills/nodejs-backend-patterns` — layered architecture, DI, auth, caching
-- `.agents/skills/mongoose` — MongoDB schemas, ODM patterns
+- `.agents/skills/mongoose` — Mongoose ODM (8.x/9.x), TypeScript integration, performance best practices
+- `.agents/skills/mongoose-mongodb` — MongoDB data layers with Mongoose, schema design, indexing, virtuals, middleware hooks
+- `.agents/skills/mongodb` — MongoDB connection, CRUD, aggregation, indexing
 - `.agents/skills/prisma-postgres` — PostgreSQL schema, migrations, queries
 - `.agents/skills/mysql` — MySQL/MariaDB schema, indexing, query tuning, transactions
 - `.agents/skills/sequelize` — Sequelize ORM models, associations, migrations, queries
