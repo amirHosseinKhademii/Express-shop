@@ -2,6 +2,8 @@ import { User } from "./user.model.js";
 import { Product } from "./product.model.js";
 import { Cart } from "./cart.model.js";
 import { CartItem } from "./cartItem.model.js";
+import { Order } from "./order.model.js";
+import { OrderItem } from "./order-item.model.js";
 // ─── One-to-Many: User → Products ───────────────────────────────
 // A user can create many products; each product belongs to exactly one user.
 // Deleting a user cascades to remove all their products.
@@ -52,5 +54,39 @@ Product.belongsToMany(Cart, {
     as: "carts",
     onDelete: "CASCADE",
 });
-export { User, Product, Cart, CartItem };
+// ─── One-to-Many: User → Orders ──────────────────────────────────
+// A user can place many orders; each order belongs to exactly one user.
+// Deleting a user cascades to remove all their orders.
+// Adds: user.getOrders(), user.createOrder(), order.getUser()
+User.hasMany(Order, {
+    foreignKey: { name: "userId", allowNull: false },
+    as: "orders",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+});
+Order.belongsTo(User, {
+    foreignKey: { name: "userId", allowNull: false },
+    as: "user",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+});
+// ─── Many-to-Many: Order ↔ Products (through OrderItem) ─────────
+// An order can contain many products; a product can appear in many orders.
+// OrderItem is the junction table holding quantity per product per order.
+// Adds: order.getItems(), order.addItem(), product.getOrders()
+Order.belongsToMany(Product, {
+    through: OrderItem,
+    foreignKey: "orderId",
+    otherKey: "productId",
+    as: "items",
+    onDelete: "CASCADE",
+});
+Product.belongsToMany(Order, {
+    through: OrderItem,
+    foreignKey: "productId",
+    otherKey: "orderId",
+    as: "orders",
+    onDelete: "CASCADE",
+});
+export { User, Product, Cart, CartItem, Order, OrderItem };
 //# sourceMappingURL=index.js.map

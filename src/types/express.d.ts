@@ -21,6 +21,12 @@ type UserInstance = Model<UserAttributes, Partial<UserAttributes>> &
       values?: Record<string, unknown>,
       options?: CreateOptions,
     ) => Promise<Model>;
+    getOrders: (options?: FindOptions) => Promise<Model[]>;
+    createOrder: (
+      values?: Record<string, unknown>,
+      options?: CreateOptions,
+    ) => Promise<Model>;
+    countOrders: (options?: FindOptions) => Promise<number>;
   };
 
 declare global {

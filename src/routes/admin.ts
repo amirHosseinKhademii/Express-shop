@@ -14,7 +14,17 @@ import {
 const router = Router();
 
 router.post("/products", validateRequest(createProductSchema), addProduct);
-router.put("/products/:id", validateRequest(updateProductSchema), updateProduct);
-router.delete("/products/:id", validateRequest(productIdParamSchema), deleteProduct);
+
+router.put(
+  "/products/:id",
+  validateRequest(updateProductSchema),
+  updateProduct,
+);
+
+router.delete(
+  "/products/:id",
+  validateRequest(productIdParamSchema),
+  deleteProduct,
+);
 
 export { router as adminRoutes };

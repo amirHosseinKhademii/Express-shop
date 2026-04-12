@@ -5,7 +5,6 @@ import { connectSequelize, closeSequelize } from "./utils/sequelize.js";
 const start = async (): Promise<void> => {
   const app = createApp();
 
-  // await connectMySQL();
   await connectSequelize();
 
   const server = app.listen(config.port, () => {
@@ -15,7 +14,6 @@ const start = async (): Promise<void> => {
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received. Shutting down gracefully...`);
     server.close(async () => {
-      //  await closeMySQL();
       await closeSequelize();
       console.log("Server closed");
       process.exit(0);
