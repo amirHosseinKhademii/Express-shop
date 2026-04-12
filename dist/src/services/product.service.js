@@ -1,8 +1,15 @@
+import { ObjectId } from "mongodb";
 import { Product } from "../models/index.js";
-import { sequelize } from "../utils/sequelize.js";
+import { sequelize } from "../database/sequelize.js";
 import { NotFoundError, ForbiddenError } from "../utils/errors.js";
 import { pickDefined } from "../utils/pick-defined.js";
-export const PRODUCT_ATTRIBUTES = ["id", "title", "price", "description"];
+import { mdb } from "../database/mongodb.js";
+export const PRODUCT_ATTRIBUTES = [
+    "id",
+    "title",
+    "price",
+    "description",
+];
 const ALLOWED_FIELDS = ["title", "price", "description"];
 const RESPONSE_ATTRIBUTES = [
     "id",
@@ -78,5 +85,63 @@ export async function deleteProduct(user, productId) {
     await sequelize.transaction(async (t) => {
         await product.destroy({ transaction: t });
     });
+}
+const products = () => mdb.collection("products");
+const PRODUCT_PROJECTION = {
+    _id: 1,
+    userId: 1,
+    title: 1,
+    price: 1,
+    description: 1,
+    createdAt: 1,
+    updatedAt: 1,
+};
+export async function getUserProductsMdb(user, options) {
+    const filter = { userId: user.id };
+    const [rows, count] = await Promise.all([
+        products()
+            .find(filter, { projection: PRODUCT_PROJECTION })
+            .sort({ _id: 1 })
+            .skip(options.offset)
+            .limit(options.limit)
+            .toArray(),
+        products().countDocuments(filter),
+    ]);
+    return { rows, count };
+}
+export async function getUserProductByIdMdb(user, productId) {
+    const product = await products().findOne({ _id: new ObjectId(productId), userId: user.id }, { projection: PRODUCT_PROJECTION });
+    if (!product)
+        throw new NotFoundError("Product");
+    return product;
+}
+export async function createProductMdb(user, body) {
+    const fields = pickDefined(body, ALLOWED_FIELDS);
+    const now = new Date();
+    const doc = {
+        userId: user.id,
+        title: fields.title,
+        price: fields.price,
+        description: fields.description ?? null,
+        createdAt: now,
+        updatedAt: now,
+    };
+    const result = await products().insertOne(doc);
+    return { _id: result.insertedId, ...doc };
+}
+export async function updateProductMdb(user, productId, body) {
+    const fields = pickDefined(body, ALLOWED_FIELDS);
+    if (Object.keys(fields).length === 0) {
+        return getUserProductByIdMdb(user, productId);
+    }
+    const result = await products().findOneAndUpdate({ _id: new ObjectId(productId), userId: user.id }, { $set: { ...fields, updatedAt: new Date() } }, { returnDocument: "after", projection: PRODUCT_PROJECTION });
+    if (!result)
+        throw new NotFoundError("Product");
+    return result;
+}
+export async function deleteProductMdb(user, productId) {
+    const result = await products().findOneAndDelete({ _id: new ObjectId(productId), userId: user.id });
+    if (!result)
+        throw new NotFoundError("Product");
 }
 //# sourceMappingURL=product.service.js.map

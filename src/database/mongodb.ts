@@ -11,7 +11,7 @@ const client = new MongoClient(config.database.mongoUri, {
   retryReads: true,
 });
 
-export const db = client.db();
+export const mdb = client.db();
 
 export const connectMongo = async (): Promise<void> => {
   try {

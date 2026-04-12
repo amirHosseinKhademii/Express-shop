@@ -1,13 +1,13 @@
-import { ForeignKeyConstraintError, UniqueConstraintError, } from "sequelize";
+import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
 import { ApiResponse } from "../utils/response.js";
 import { ConflictError, UnauthorizedError } from "../utils/errors.js";
-import { parseId } from "../utils/parse-id.js";
-import { createProduct, updateProduct as updateProductService, deleteProduct as deleteProductService, } from "../services/product.service.js";
+import { createProductMdb, updateProductMdb, deleteProductMdb, } from "../services/product.service.js";
 export const addProduct = async (req, res, next) => {
     try {
         if (!req.user)
             throw new UnauthorizedError("Authentication required");
-        const product = await createProduct(req.user, req.body);
+        //const product = await createProduct(req.user, req.body);
+        const product = await createProductMdb(req.user, req.body);
         ApiResponse.created(res, product, "Product added");
     }
     catch (error) {
@@ -22,8 +22,10 @@ export const updateProduct = async (req, res, next) => {
     try {
         if (!req.user)
             throw new UnauthorizedError("Authentication required");
-        const id = parseId(req.params["id"], "Product");
-        const product = await updateProductService(req.user, id, req.body);
+        const productId = req.params["id"];
+        //const id = parseId(req.params["id"], "Product");
+        //const product = await updateProductService(req.user, id, req.body);
+        const product = await updateProductMdb(req.user, productId, req.body);
         ApiResponse.success(res, product, "Product updated");
     }
     catch (error) {
@@ -38,8 +40,10 @@ export const deleteProduct = async (req, res, next) => {
     try {
         if (!req.user)
             throw new UnauthorizedError("Authentication required");
-        const id = parseId(req.params["id"], "Product");
-        await deleteProductService(req.user, id);
+        const productId = req.params["id"];
+        //const id = parseId(req.params["id"], "Product");
+        //await deleteProductService(req.user, id);
+        await deleteProductMdb(req.user, productId);
         ApiResponse.noContent(res);
     }
     catch (error) {

@@ -1,5 +1,5 @@
 import { Op } from "sequelize";
-import { sequelize } from "../utils/sequelize.js";
+import { sequelize } from "../database/sequelize.js";
 import { Order, Product, CartItem } from "../models/index.js";
 import { NotFoundError } from "../utils/errors.js";
 import { ValidationError } from "../utils/errors.js";
@@ -24,15 +24,17 @@ export async function createOrder(user, items) {
         throw new NotFoundError(`Products not found or not owned: ${invalid.join(", ")}`);
     }
     const quantityMap = new Map(items.map((i) => [i.productId, i.quantity]));
-    const products = await Product.findAll({
+    const products = (await Product.findAll({
         where: { id: { [Op.in]: [...quantityMap.keys()] } },
-    });
+    }));
     const order = await sequelize.transaction(async (t) => {
         const created = await user.createOrder({}, { transaction: t });
         await addProductsToOrder(created, products, quantityMap, t);
         return created;
     });
-    return Order.findByPk(order.id, { include: ORDER_INCLUDE });
+    return Order.findByPk(order.id, {
+        include: ORDER_INCLUDE,
+    });
 }
 export async function createOrderFromCart(user) {
     const cart = await getOrCreateCart(user);
@@ -44,9 +46,9 @@ export async function createOrderFromCart(user) {
         throw new ValidationError("Cart is empty");
     }
     const quantityMap = new Map(cartProducts.map((p) => [p.id, p.cartItem.quantity]));
-    const products = await Product.findAll({
+    const products = (await Product.findAll({
         where: { id: { [Op.in]: [...quantityMap.keys()] } },
-    });
+    }));
     const order = await sequelize.transaction(async (t) => {
         const created = await user.createOrder({}, { transaction: t });
         await addProductsToOrder(created, products, quantityMap, t);
@@ -56,7 +58,9 @@ export async function createOrderFromCart(user) {
         });
         return created;
     });
-    return Order.findByPk(order.id, { include: ORDER_INCLUDE });
+    return Order.findByPk(order.id, {
+        include: ORDER_INCLUDE,
+    });
 }
 async function addProductsToOrder(order, products, quantityMap, transaction) {
     const withJunction = products.map((p) => {

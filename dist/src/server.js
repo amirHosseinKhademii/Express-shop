@@ -1,6 +1,6 @@
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
-import { closeMongo, connectMongo } from "./utils/mongodb.js";
+import { closeMongo, connectMongo } from "./database/mongodb.js";
 const start = async () => {
     const app = createApp();
     // await connectSequelize();
