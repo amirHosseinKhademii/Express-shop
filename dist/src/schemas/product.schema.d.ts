@@ -85,14 +85,14 @@ export declare const productIdParamSchema: z.ZodObject<{
 }>;
 export declare const addProductToCartSchema: z.ZodObject<{
     body: z.ZodObject<{
-        productId: z.ZodNumber;
-        quantity: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
+        productId: z.ZodPipeline<z.ZodEffects<z.ZodNumber, number, unknown>, z.ZodNumber>;
+        quantity: z.ZodEffects<z.ZodDefault<z.ZodOptional<z.ZodNumber>>, number, unknown>;
     }, "strip", z.ZodTypeAny, {
         productId: number;
         quantity: number;
     }, {
-        productId: number;
-        quantity?: number | undefined;
+        productId?: unknown;
+        quantity?: unknown;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
@@ -101,8 +101,30 @@ export declare const addProductToCartSchema: z.ZodObject<{
     };
 }, {
     body: {
+        productId?: unknown;
+        quantity?: unknown;
+    };
+}>;
+export declare const removeProductFromCartSchema: z.ZodObject<{
+    body: z.ZodObject<{
+        productId: z.ZodPipeline<z.ZodEffects<z.ZodNumber, number, unknown>, z.ZodNumber>;
+        quantity: z.ZodEffects<z.ZodDefault<z.ZodOptional<z.ZodNumber>>, number, unknown>;
+    }, "strip", z.ZodTypeAny, {
         productId: number;
-        quantity?: number | undefined;
+        quantity: number;
+    }, {
+        productId?: unknown;
+        quantity?: unknown;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    body: {
+        productId: number;
+        quantity: number;
+    };
+}, {
+    body: {
+        productId?: unknown;
+        quantity?: unknown;
     };
 }>;
 //# sourceMappingURL=product.schema.d.ts.map

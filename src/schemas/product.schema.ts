@@ -28,21 +28,33 @@ export const productIdParamSchema = z.object({
   }),
 });
 
-export const addProductToCartSchema = z.object({
-  body: z.object({
-    productId: z
+const coerceInt = (fieldName: string) =>
+  z.preprocess(
+    (val) => (val === undefined || val === null ? undefined : Number(val)),
+    z
       .number({
-        required_error: "Product ID is required",
-        invalid_type_error: "Product ID must be a number",
+        required_error: `${fieldName} is required`,
+        invalid_type_error: `${fieldName} must be a valid number`,
       })
-      .int("Product ID must be a whole number")
-      .positive("Product ID must be a positive integer"),
-    quantity: z
-      .number({ invalid_type_error: "Quantity must be a number" })
+      .int(`${fieldName} must be a whole number`),
+  );
+
+const cartItemBodySchema = z.object({
+  productId: coerceInt("Product ID").pipe(
+    z.number().positive("Product ID must be a positive integer"),
+  ),
+  quantity: z.preprocess(
+    (val) => (val === undefined || val === null ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: "Quantity must be a valid number" })
       .int("Quantity must be a whole number")
       .min(1, "Quantity must be at least 1")
       .max(999, "Quantity cannot exceed 999")
       .optional()
       .default(1),
-  }),
+  ),
 });
+
+export const addProductToCartSchema = z.object({ body: cartItemBodySchema });
+
+export const removeProductFromCartSchema = z.object({ body: cartItemBodySchema });
