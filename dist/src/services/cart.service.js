@@ -15,34 +15,35 @@ export async function getOrCreateCart(user) {
     return user.createCart();
 }
 export async function loadCartWithItems(cart) {
-    return Cart.findByPk(cart.get("id"), { include: CART_INCLUDE });
+    return Cart.findByPk(cart.id, { include: CART_INCLUDE });
 }
-export async function addItemToCart(cart, productId, quantity) {
-    const product = await Product.findByPk(productId);
-    if (!product)
+export async function addItemToCart(user, cart, productId, quantity) {
+    const owns = await user.hasProduct(productId);
+    if (!owns)
         throw new NotFoundError("Product");
-    const cartId = cart.get("id");
     const [item, created] = await CartItem.findOrCreate({
-        where: { cartId, productId },
+        where: { cartId: cart.id, productId },
         defaults: { quantity },
     });
     if (!created) {
-        await item.update({ quantity: item.get("quantity") + quantity });
+        const cartItem = item;
+        await cartItem.update({ quantity: cartItem.quantity + quantity });
     }
     return loadCartWithItems(cart);
 }
 export async function removeItemFromCart(cart, productId, quantity) {
-    const cartId = cart.get("id");
-    const item = await CartItem.findOne({ where: { cartId, productId } });
+    const item = await CartItem.findOne({
+        where: { cartId: cart.id, productId },
+    });
     if (!item)
         throw new NotFoundError("Cart item");
-    const currentQty = item.get("quantity");
-    const newQty = currentQty - quantity;
+    const cartItem = item;
+    const newQty = cartItem.quantity - quantity;
     if (newQty <= 0) {
-        await item.destroy();
+        await cartItem.destroy();
     }
     else {
-        await item.update({ quantity: newQty });
+        await cartItem.update({ quantity: newQty });
     }
     return loadCartWithItems(cart);
 }

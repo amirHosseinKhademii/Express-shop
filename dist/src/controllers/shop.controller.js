@@ -4,6 +4,7 @@ import { parsePagination } from "../utils/pagination.js";
 import { parseId } from "../utils/parse-id.js";
 import { getUserProducts, getUserProductById, } from "../services/product.service.js";
 import { getOrCreateCart, loadCartWithItems, addItemToCart, removeItemFromCart, } from "../services/cart.service.js";
+import { createOrder as createOrderService, createOrderFromCart, getUserOrders, getOrderById, } from "../services/order.service.js";
 export const getProducts = async (req, res, next) => {
     try {
         if (!req.user)
@@ -21,7 +22,7 @@ export const getProductById = async (req, res, next) => {
         if (!req.user)
             throw new UnauthorizedError("Authentication required");
         const id = parseId(req.params["id"], "Product");
-        const product = await getUserProductById(req.user.id, id);
+        const product = await getUserProductById(req.user, id);
         ApiResponse.success(res, product);
     }
     catch (error) {
@@ -47,7 +48,7 @@ export const addProductToCart = async (req, res, next) => {
         const productId = parseId(req.body["productId"], "Product");
         const quantity = Math.max(parseInt(req.body["quantity"]) || 1, 1);
         const cart = await getOrCreateCart(req.user);
-        const updated = await addItemToCart(cart, productId, quantity);
+        const updated = await addItemToCart(req.user, cart, productId, quantity);
         ApiResponse.success(res, updated, "Product added to cart");
     }
     catch (error) {
@@ -63,6 +64,44 @@ export const removeProductFromCart = async (req, res, next) => {
         const cart = await getOrCreateCart(req.user);
         const updated = await removeItemFromCart(cart, productId, quantity);
         ApiResponse.success(res, updated, "Product removed from cart");
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const createOrder = async (req, res, next) => {
+    try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
+        const { items, fromCart } = req.body;
+        const order = fromCart
+            ? await createOrderFromCart(req.user)
+            : await createOrderService(req.user, items);
+        ApiResponse.created(res, order, "Order placed");
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const getOrders = async (req, res, next) => {
+    try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
+        const { page, limit, offset } = parsePagination(req);
+        const { rows, count } = await getUserOrders(req.user, { limit, offset });
+        ApiResponse.paginated(res, rows, page, limit, count);
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const getOrder = async (req, res, next) => {
+    try {
+        if (!req.user)
+            throw new UnauthorizedError("Authentication required");
+        const id = parseId(req.params["id"], "Order");
+        const order = await getOrderById(req.user.id, id);
+        ApiResponse.success(res, order);
     }
     catch (error) {
         next(error);

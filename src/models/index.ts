@@ -87,7 +87,7 @@ Order.belongsToMany(Product, {
   through: OrderItem,
   foreignKey: "orderId",
   otherKey: "productId",
-  as: "items",
+  as: "products",
   onDelete: "CASCADE",
 });
 

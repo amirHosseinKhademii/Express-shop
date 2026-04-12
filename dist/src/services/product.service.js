@@ -25,10 +25,12 @@ export async function getUserProducts(user, options) {
     ]);
     return { rows, count };
 }
-export async function getUserProductById(userId, productId) {
-    const product = await Product.findOne({
+export async function getUserProductById(user, productId) {
+    const owns = await user.hasProduct(productId);
+    if (!owns)
+        throw new NotFoundError("Product");
+    const product = await Product.findByPk(productId, {
         attributes: [...PRODUCT_ATTRIBUTES],
-        where: { id: productId, userId },
         raw: true,
     });
     if (!product)
@@ -40,34 +42,39 @@ export async function createProduct(user, body) {
     const created = await user.createProduct(fields, {
         fields: [...ALLOWED_FIELDS],
     });
-    return Product.findByPk(created.get("id"), {
+    const plain = await Product.findByPk(created.id, {
         attributes: [...RESPONSE_ATTRIBUTES],
         raw: true,
     });
+    if (!plain)
+        throw new NotFoundError("Product");
+    return plain;
 }
-async function findOwnedProduct(userId, productId) {
-    const product = await Product.findOne({
-        where: { id: productId },
+async function findOwnedProduct(user, productId) {
+    const owns = await user.hasProduct(productId);
+    if (!owns)
+        throw new ForbiddenError("You can only modify your own products");
+    const product = await Product.findByPk(productId, {
         rejectOnEmpty: new NotFoundError("Product"),
     });
-    if (product.get("userId") !== userId) {
-        throw new ForbiddenError("You can only modify your own products");
-    }
     return product;
 }
-export async function updateProduct(userId, productId, body) {
-    const product = await findOwnedProduct(userId, productId);
+export async function updateProduct(user, productId, body) {
+    const product = await findOwnedProduct(user, productId);
     const fields = pickDefined(body, ALLOWED_FIELDS);
     if (Object.keys(fields).length > 0) {
         await product.update(fields, { fields: [...ALLOWED_FIELDS] });
     }
-    return Product.findByPk(productId, {
+    const plain = await Product.findByPk(productId, {
         attributes: [...RESPONSE_ATTRIBUTES],
         raw: true,
     });
+    if (!plain)
+        throw new NotFoundError("Product");
+    return plain;
 }
-export async function deleteProduct(userId, productId) {
-    const product = await findOwnedProduct(userId, productId);
+export async function deleteProduct(user, productId) {
+    const product = await findOwnedProduct(user, productId);
     await sequelize.transaction(async (t) => {
         await product.destroy({ transaction: t });
     });

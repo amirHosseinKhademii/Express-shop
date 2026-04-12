@@ -23,7 +23,7 @@ export const updateProduct = async (req, res, next) => {
         if (!req.user)
             throw new UnauthorizedError("Authentication required");
         const id = parseId(req.params["id"], "Product");
-        const product = await updateProductService(req.user.id, id, req.body);
+        const product = await updateProductService(req.user, id, req.body);
         ApiResponse.success(res, product, "Product updated");
     }
     catch (error) {
@@ -39,7 +39,7 @@ export const deleteProduct = async (req, res, next) => {
         if (!req.user)
             throw new UnauthorizedError("Authentication required");
         const id = parseId(req.params["id"], "Product");
-        await deleteProductService(req.user.id, id);
+        await deleteProductService(req.user, id);
         ApiResponse.noContent(res);
     }
     catch (error) {

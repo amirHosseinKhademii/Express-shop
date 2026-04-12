@@ -1,7 +1,13 @@
 import type { Request } from "express";
-import type { Model } from "sequelize";
+import type {
+  CartInstance,
+  CartItemInstance,
+  ProductInstance,
+} from "../types/express.js";
 import { Product, Cart, CartItem } from "../models/index.js";
 import { NotFoundError } from "../utils/errors.js";
+
+type User = NonNullable<Request["user"]>;
 
 const CART_INCLUDE = [
   {
@@ -12,59 +18,57 @@ const CART_INCLUDE = [
   },
 ];
 
-export async function getOrCreateCart(
-  user: NonNullable<Request["user"]>,
-): Promise<Model> {
+export async function getOrCreateCart(user: User): Promise<CartInstance> {
   const cart = await user.getCart();
   if (cart) return cart;
   return user.createCart();
 }
 
 export async function loadCartWithItems(
-  cart: Model,
-): Promise<Model | null> {
-  return Cart.findByPk(cart.get("id") as number, { include: CART_INCLUDE });
+  cart: CartInstance,
+): Promise<CartInstance | null> {
+  return Cart.findByPk(cart.id, { include: CART_INCLUDE }) as Promise<CartInstance | null>;
 }
 
 export async function addItemToCart(
-  cart: Model,
+  user: User,
+  cart: CartInstance,
   productId: number,
   quantity: number,
-): Promise<Model | null> {
-  const product = await Product.findByPk(productId);
-  if (!product) throw new NotFoundError("Product");
-
-  const cartId = cart.get("id") as number;
+): Promise<CartInstance | null> {
+  const owns = await user.hasProduct(productId);
+  if (!owns) throw new NotFoundError("Product");
 
   const [item, created] = await CartItem.findOrCreate({
-    where: { cartId, productId },
+    where: { cartId: cart.id, productId },
     defaults: { quantity },
   });
 
   if (!created) {
-    await item.update({ quantity: (item.get("quantity") as number) + quantity });
+    const cartItem = item as unknown as CartItemInstance;
+    await cartItem.update({ quantity: cartItem.quantity + quantity });
   }
 
   return loadCartWithItems(cart);
 }
 
 export async function removeItemFromCart(
-  cart: Model,
+  cart: CartInstance,
   productId: number,
   quantity: number,
-): Promise<Model | null> {
-  const cartId = cart.get("id") as number;
-
-  const item = await CartItem.findOne({ where: { cartId, productId } });
+): Promise<CartInstance | null> {
+  const item = await CartItem.findOne({
+    where: { cartId: cart.id, productId },
+  });
   if (!item) throw new NotFoundError("Cart item");
 
-  const currentQty = item.get("quantity") as number;
-  const newQty = currentQty - quantity;
+  const cartItem = item as unknown as CartItemInstance;
+  const newQty = cartItem.quantity - quantity;
 
   if (newQty <= 0) {
-    await item.destroy();
+    await cartItem.destroy();
   } else {
-    await item.update({ quantity: newQty });
+    await cartItem.update({ quantity: newQty });
   }
 
   return loadCartWithItems(cart);

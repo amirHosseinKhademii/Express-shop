@@ -1,15 +1,17 @@
 import type { Request } from "express";
-import type { Model } from "sequelize";
+import type { ProductInstance } from "../types/express.js";
+type User = NonNullable<Request["user"]>;
 export declare const PRODUCT_ATTRIBUTES: readonly ["id", "title", "price", "description"];
-export declare function getUserProducts(user: NonNullable<Request["user"]>, options: {
+export declare function getUserProducts(user: User, options: {
     limit: number;
     offset: number;
 }): Promise<{
-    rows: Model[];
+    rows: ProductInstance[];
     count: number;
 }>;
-export declare function getUserProductById(userId: number, productId: number): Promise<Model>;
-export declare function createProduct(user: NonNullable<Request["user"]>, body: Record<string, unknown>): Promise<Model | null>;
-export declare function updateProduct(userId: number, productId: number, body: Record<string, unknown>): Promise<Model | null>;
-export declare function deleteProduct(userId: number, productId: number): Promise<void>;
+export declare function getUserProductById(user: User, productId: number): Promise<ProductInstance>;
+export declare function createProduct(user: User, body: Record<string, unknown>): Promise<ProductInstance>;
+export declare function updateProduct(user: User, productId: number, body: Record<string, unknown>): Promise<ProductInstance>;
+export declare function deleteProduct(user: User, productId: number): Promise<void>;
+export {};
 //# sourceMappingURL=product.service.d.ts.map

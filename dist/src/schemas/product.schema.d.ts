@@ -127,4 +127,76 @@ export declare const removeProductFromCartSchema: z.ZodObject<{
         quantity?: unknown;
     };
 }>;
+export declare const createOrderSchema: z.ZodObject<{
+    body: z.ZodEffects<z.ZodObject<{
+        items: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            productId: z.ZodPipeline<z.ZodEffects<z.ZodNumber, number, unknown>, z.ZodNumber>;
+            quantity: z.ZodEffects<z.ZodDefault<z.ZodOptional<z.ZodNumber>>, number, unknown>;
+        }, "strip", z.ZodTypeAny, {
+            productId: number;
+            quantity: number;
+        }, {
+            productId?: unknown;
+            quantity?: unknown;
+        }>, "many">>;
+        fromCart: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+    }, "strip", z.ZodTypeAny, {
+        fromCart: boolean;
+        items?: {
+            productId: number;
+            quantity: number;
+        }[] | undefined;
+    }, {
+        items?: {
+            productId?: unknown;
+            quantity?: unknown;
+        }[] | undefined;
+        fromCart?: boolean | undefined;
+    }>, {
+        fromCart: boolean;
+        items?: {
+            productId: number;
+            quantity: number;
+        }[] | undefined;
+    }, {
+        items?: {
+            productId?: unknown;
+            quantity?: unknown;
+        }[] | undefined;
+        fromCart?: boolean | undefined;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    body: {
+        fromCart: boolean;
+        items?: {
+            productId: number;
+            quantity: number;
+        }[] | undefined;
+    };
+}, {
+    body: {
+        items?: {
+            productId?: unknown;
+            quantity?: unknown;
+        }[] | undefined;
+        fromCart?: boolean | undefined;
+    };
+}>;
+export declare const orderIdParamSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+    }, {
+        id: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
+}, {
+    params: {
+        id: string;
+    };
+}>;
 //# sourceMappingURL=product.schema.d.ts.map

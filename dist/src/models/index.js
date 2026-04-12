@@ -1,7 +1,7 @@
 import { User } from "./user.model.js";
 import { Product } from "./product.model.js";
 import { Cart } from "./cart.model.js";
-import { CartItem } from "./cartItem.model.js";
+import { CartItem } from "./cart-item.model.js";
 import { Order } from "./order.model.js";
 import { OrderItem } from "./order-item.model.js";
 // ─── One-to-Many: User → Products ───────────────────────────────
@@ -78,7 +78,7 @@ Order.belongsToMany(Product, {
     through: OrderItem,
     foreignKey: "orderId",
     otherKey: "productId",
-    as: "items",
+    as: "products",
     onDelete: "CASCADE",
 });
 Product.belongsToMany(Order, {

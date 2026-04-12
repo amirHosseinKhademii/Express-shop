@@ -41,5 +41,35 @@ const cartItemBodySchema = z.object({
         .default(1)),
 });
 export const addProductToCartSchema = z.object({ body: cartItemBodySchema });
-export const removeProductFromCartSchema = z.object({ body: cartItemBodySchema });
+export const removeProductFromCartSchema = z.object({
+    body: cartItemBodySchema,
+});
+const orderItemSchema = z.object({
+    productId: coerceInt("Product ID").pipe(z.number().positive("Product ID must be a positive integer")),
+    quantity: z.preprocess((val) => (val === undefined || val === null ? undefined : Number(val)), z
+        .number({ invalid_type_error: "Quantity must be a valid number" })
+        .int("Quantity must be a whole number")
+        .min(1, "Quantity must be at least 1")
+        .max(999, "Quantity cannot exceed 999")
+        .optional()
+        .default(1)),
+});
+export const createOrderSchema = z.object({
+    body: z.object({
+        items: z
+            .array(orderItemSchema, {
+            required_error: "Items array is required",
+            invalid_type_error: "Items must be an array",
+        })
+            .min(1, "Order must contain at least one item")
+            .max(50, "Order cannot exceed 50 items")
+            .optional(),
+        fromCart: z.boolean().optional().default(false),
+    }).refine((data) => data.fromCart || (data.items && data.items.length > 0), { message: "Provide items array or set fromCart to true" }),
+});
+export const orderIdParamSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, "Order ID is required"),
+    }),
+});
 //# sourceMappingURL=product.schema.js.map

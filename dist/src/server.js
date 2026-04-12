@@ -3,7 +3,6 @@ import { config } from "./config/index.js";
 import { connectSequelize, closeSequelize } from "./utils/sequelize.js";
 const start = async () => {
     const app = createApp();
-    // await connectMySQL();
     await connectSequelize();
     const server = app.listen(config.port, () => {
         console.log(`Server running on port ${config.port} [${config.env}]`);
@@ -11,7 +10,6 @@ const start = async () => {
     const shutdown = async (signal) => {
         console.log(`\n${signal} received. Shutting down gracefully...`);
         server.close(async () => {
-            //  await closeMySQL();
             await closeSequelize();
             console.log("Server closed");
             process.exit(0);

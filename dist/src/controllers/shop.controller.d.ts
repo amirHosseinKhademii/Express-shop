@@ -4,4 +4,7 @@ export declare const getProductById: (req: Request, res: Response, next: NextFun
 export declare const getCart: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const addProductToCart: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const removeProductFromCart: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const createOrder: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const getOrders: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const getOrder: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 //# sourceMappingURL=shop.controller.d.ts.map

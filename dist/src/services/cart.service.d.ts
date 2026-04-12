@@ -1,7 +1,9 @@
 import type { Request } from "express";
-import type { Model } from "sequelize";
-export declare function getOrCreateCart(user: NonNullable<Request["user"]>): Promise<Model>;
-export declare function loadCartWithItems(cart: Model): Promise<Model | null>;
-export declare function addItemToCart(cart: Model, productId: number, quantity: number): Promise<Model | null>;
-export declare function removeItemFromCart(cart: Model, productId: number, quantity: number): Promise<Model | null>;
+import type { CartInstance } from "../types/express.js";
+type User = NonNullable<Request["user"]>;
+export declare function getOrCreateCart(user: User): Promise<CartInstance>;
+export declare function loadCartWithItems(cart: CartInstance): Promise<CartInstance | null>;
+export declare function addItemToCart(user: User, cart: CartInstance, productId: number, quantity: number): Promise<CartInstance | null>;
+export declare function removeItemFromCart(cart: CartInstance, productId: number, quantity: number): Promise<CartInstance | null>;
+export {};
 //# sourceMappingURL=cart.service.d.ts.map

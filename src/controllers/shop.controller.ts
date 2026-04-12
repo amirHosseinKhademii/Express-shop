@@ -13,6 +13,12 @@ import {
   addItemToCart,
   removeItemFromCart,
 } from "../services/cart.service.js";
+import {
+  createOrder as createOrderService,
+  createOrderFromCart,
+  getUserOrders,
+  getOrderById,
+} from "../services/order.service.js";
 
 export const getProducts = async (
   req: Request,
@@ -40,7 +46,7 @@ export const getProductById = async (
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
     const id = parseId(req.params["id"], "Product");
-    const product = await getUserProductById(req.user.id, id);
+    const product = await getUserProductById(req.user, id);
 
     ApiResponse.success(res, product);
   } catch (error) {
@@ -77,7 +83,7 @@ export const addProductToCart = async (
     const quantity = Math.max(parseInt(req.body["quantity"]) || 1, 1);
 
     const cart = await getOrCreateCart(req.user);
-    const updated = await addItemToCart(cart, productId, quantity);
+    const updated = await addItemToCart(req.user, cart, productId, quantity);
 
     ApiResponse.success(res, updated, "Product added to cart");
   } catch (error) {
@@ -100,6 +106,60 @@ export const removeProductFromCart = async (
     const updated = await removeItemFromCart(cart, productId, quantity);
 
     ApiResponse.success(res, updated, "Product removed from cart");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) throw new UnauthorizedError("Authentication required");
+
+    const { items, fromCart } = req.body;
+
+    const order = fromCart
+      ? await createOrderFromCart(req.user)
+      : await createOrderService(req.user, items);
+
+    ApiResponse.created(res, order, "Order placed");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) throw new UnauthorizedError("Authentication required");
+
+    const { page, limit, offset } = parsePagination(req);
+    const { rows, count } = await getUserOrders(req.user, { limit, offset });
+
+    ApiResponse.paginated(res, rows, page, limit, count);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) throw new UnauthorizedError("Authentication required");
+
+    const id = parseId(req.params["id"], "Order");
+    const order = await getOrderById(req.user.id, id);
+
+    ApiResponse.success(res, order);
   } catch (error) {
     next(error);
   }
