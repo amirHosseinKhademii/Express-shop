@@ -128,8 +128,18 @@ export declare const removeProductFromCartSchema: z.ZodObject<{
     };
 }>;
 export declare const createOrderSchema: z.ZodObject<{
-    body: z.ZodEffects<z.ZodObject<{
-        items: z.ZodOptional<z.ZodArray<z.ZodObject<{
+    body: z.ZodUnion<[z.ZodObject<{
+        fromCart: z.ZodLiteral<true>;
+        items: z.ZodOptional<z.ZodUndefined>;
+    }, "strip", z.ZodTypeAny, {
+        fromCart: true;
+        items?: undefined;
+    }, {
+        fromCart: true;
+        items?: undefined;
+    }>, z.ZodObject<{
+        fromCart: z.ZodDefault<z.ZodOptional<z.ZodLiteral<false>>>;
+        items: z.ZodArray<z.ZodObject<{
             productId: z.ZodPipeline<z.ZodEffects<z.ZodNumber, number, unknown>, z.ZodNumber>;
             quantity: z.ZodEffects<z.ZodDefault<z.ZodOptional<z.ZodNumber>>, number, unknown>;
         }, "strip", z.ZodTypeAny, {
@@ -138,48 +148,41 @@ export declare const createOrderSchema: z.ZodObject<{
         }, {
             productId?: unknown;
             quantity?: unknown;
-        }>, "many">>;
-        fromCart: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+        }>, "many">;
     }, "strip", z.ZodTypeAny, {
-        fromCart: boolean;
-        items?: {
+        items: {
             productId: number;
             quantity: number;
-        }[] | undefined;
+        }[];
+        fromCart: false;
     }, {
-        items?: {
+        items: {
             productId?: unknown;
             quantity?: unknown;
-        }[] | undefined;
-        fromCart?: boolean | undefined;
-    }>, {
-        fromCart: boolean;
-        items?: {
-            productId: number;
-            quantity: number;
-        }[] | undefined;
-    }, {
-        items?: {
-            productId?: unknown;
-            quantity?: unknown;
-        }[] | undefined;
-        fromCart?: boolean | undefined;
-    }>;
+        }[];
+        fromCart?: false | undefined;
+    }>]>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        fromCart: boolean;
-        items?: {
+        fromCart: true;
+        items?: undefined;
+    } | {
+        items: {
             productId: number;
             quantity: number;
-        }[] | undefined;
+        }[];
+        fromCart: false;
     };
 }, {
     body: {
-        items?: {
+        fromCart: true;
+        items?: undefined;
+    } | {
+        items: {
             productId?: unknown;
             quantity?: unknown;
-        }[] | undefined;
-        fromCart?: boolean | undefined;
+        }[];
+        fromCart?: false | undefined;
     };
 }>;
 export declare const orderIdParamSchema: z.ZodObject<{

@@ -54,18 +54,24 @@ const orderItemSchema = z.object({
         .optional()
         .default(1)),
 });
+const fromCartBody = z.object({
+    fromCart: z.literal(true),
+    items: z.undefined({ invalid_type_error: "Items are not needed when ordering from cart" }).optional(),
+});
+const fromItemsBody = z.object({
+    fromCart: z.literal(false).optional().default(false),
+    items: z
+        .array(orderItemSchema, {
+        required_error: "Items array is required",
+        invalid_type_error: "Items must be an array",
+    })
+        .min(1, "Order must contain at least one item")
+        .max(50, "Order cannot exceed 50 items"),
+});
 export const createOrderSchema = z.object({
-    body: z.object({
-        items: z
-            .array(orderItemSchema, {
-            required_error: "Items array is required",
-            invalid_type_error: "Items must be an array",
-        })
-            .min(1, "Order must contain at least one item")
-            .max(50, "Order cannot exceed 50 items")
-            .optional(),
-        fromCart: z.boolean().optional().default(false),
-    }).refine((data) => data.fromCart || (data.items && data.items.length > 0), { message: "Provide items array or set fromCart to true" }),
+    body: z.union([fromCartBody, fromItemsBody], {
+        errorMap: () => ({ message: "Provide items array or set fromCart to true" }),
+    }),
 });
 export const orderIdParamSchema = z.object({
     params: z.object({
