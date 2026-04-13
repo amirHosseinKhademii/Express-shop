@@ -5,8 +5,7 @@ metadata:
   labels:
     app: webapp
 spec:
-  replicas: 2
-  minReadySeconds: 30
+  replicas: 1
   selector:
     matchLabels:
       app: webapp
@@ -17,16 +16,12 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: richardchesterwood/k8s-fleetman-webapp-angular:release0-5
+        image: richardchesterwood/k8s-fleetman-webapp-angular:release2
+        env:
+          - name: SPRING_PROFILES_ACTIVE
+            value: production-microservice
         ports:
           - containerPort: 80
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 250m
-            memory: 128Mi
 
 ---
 

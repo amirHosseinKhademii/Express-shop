@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: position-tracker
+  name: api-gateway
   labels:
-    app: position-tracker
+    app: api-gateway
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: position-tracker
+      app: api-gateway
   template:
     metadata:
       labels:
-        app: position-tracker
+        app: api-gateway
     spec:
       containers:
-      - name: position-tracker
-        image: richardchesterwood/k8s-fleetman-position-tracker:release3
+      - name: api-gateway
+        image: richardchesterwood/k8s-fleetman-api-gateway:release2
         ports:
           - containerPort: 8080
         env:
@@ -28,10 +28,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: fleetman-position-tracker
+  name: fleetman-api-gateway
 spec:
   selector:
-    app: position-tracker
+    app: api-gateway
   type: ClusterIP
   ports:
   - name: http
