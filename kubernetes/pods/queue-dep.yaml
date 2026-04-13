@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: ReplicaSet
+kind: Deployment
 metadata:
   name: queue
   labels:
@@ -9,25 +9,16 @@ spec:
   selector:
     matchLabels:
       app: queue
-      release: "1"
   template:
     metadata:
       labels:
         app: queue
-        release: "1"
     spec:
       containers:
       - name: queue
         image: richardchesterwood/k8s-fleetman-queue:release1
         ports:
           - containerPort: 8161
-        resources:
-          requests:
-            cpu: 200m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
 
 ---
 
@@ -38,10 +29,12 @@ metadata:
 spec:
   selector:
     app: queue
-    release: "1"
   type: NodePort
   ports:
-  - name: fleetman-queue
+  - name: http
     port: 8161
     targetPort: 8161
     nodePort: 30010
+
+  - name: endpoint
+    port: 61616
