@@ -1,9 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import { mdb } from "../database/mongodb.js";
+import { UserModel } from "../models/user.model.js";
+import type { UserDoc } from "../types/express.js";
 
-type User = NonNullable<Request["user"]>;
-
-let cachedUser: User | null = null;
+let cachedUser: UserDoc | null = null;
 
 export const attachUser = async (
   req: Request,
@@ -12,25 +11,16 @@ export const attachUser = async (
 ): Promise<void> => {
   try {
     if (!cachedUser) {
-      const collection = mdb.collection<User>("users");
-
-      const user = await collection.findOne(
-        {},
-        { projection: { _id: 1, id: 1, email: 1, name: 1, cart: 1 } },
-      );
+      const user = await UserModel.findOne().lean(false);
 
       if (user) {
-        if (!user.cart) user.cart = [];
         cachedUser = user;
       } else {
-        const seed: Omit<User, "_id"> = {
-          id: "default",
+        cachedUser = await UserModel.create({
           email: "test@test.com",
           name: "Test User",
           cart: [],
-        };
-        const { insertedId } = await collection.insertOne(seed as User);
-        cachedUser = { _id: insertedId, ...seed };
+        });
       }
     }
 

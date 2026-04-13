@@ -1,17 +1,67 @@
 import type { Request } from "express";
-// import type {
-//   CartInstance,
-//   CartItemInstance,
-//   ProductInstance,
-// } from "../types/express.js";
-// import { Product, Cart, CartItem } from "../models/index.js";
-import { ObjectId } from "mongodb";
-import { mdb } from "../database/mongodb.js";
+import { ProductModel } from "../models/product.model.js";
+import type { PopulatedCartItem } from "../models/user.model.js";
 import { NotFoundError } from "../utils/errors.js";
 import { toObjectId } from "../utils/parse-id.js";
 
 type User = NonNullable<Request["user"]>;
-type CartItemDoc = User["cart"][number];
+
+// ─── Mongoose cart services (cart embedded on user) ──────────
+
+interface CartItemWithProduct {
+  productId: string;
+  quantity: number;
+  product: PopulatedCartItem["productId"];
+}
+
+export async function getCartMdb(user: User): Promise<CartItemWithProduct[]> {
+  const items = await user.getCart();
+
+  return items.map((item) => ({
+    productId: item.productId?._id?.toString() ?? "",
+    quantity: item.quantity,
+    product: item.productId ?? null,
+  }));
+}
+
+export async function addItemToCartMdb(
+  user: User,
+  productId: string,
+): Promise<CartItemWithProduct[]> {
+  toObjectId(productId, "Product");
+
+  const existing = (user.cart ?? []).find(
+    (item) => item.productId.toString() === productId,
+  );
+
+  if (!existing) {
+    const exists = await ProductModel.exists({ _id: productId });
+    if (!exists) throw new NotFoundError("Product");
+  }
+
+  await user.addToCart(productId, 1);
+  return getCartMdb(user);
+}
+
+export async function removeItemFromCartMdb(
+  user: User,
+  productId: string,
+  quantity: number,
+): Promise<CartItemWithProduct[]> {
+  toObjectId(productId, "Product");
+
+  const existing = (user.cart ?? []).find(
+    (item) => item.productId.toString() === productId,
+  );
+  if (!existing) throw new NotFoundError("Cart item");
+
+  await user.removeFromCart(productId, quantity);
+  return getCartMdb(user);
+}
+
+export async function clearCartMdb(user: User): Promise<void> {
+  await user.clearCart();
+}
 
 // ─── Sequelize (commented out) ────────────────────────────────
 
@@ -83,126 +133,3 @@ type CartItemDoc = User["cart"][number];
 // }
 
 // ─── MongoDB (native driver) — cart embedded on user ─────────
-
-interface ProductDoc {
-  title: string;
-  price: number;
-  description: string | null;
-}
-
-const users = () => mdb.collection<User>("users");
-const products = () => mdb.collection<ProductDoc>("products");
-
-function updatedCart(
-  result: import("mongodb").WithId<User> | null,
-): CartItemDoc[] {
-  return result?.cart ?? [];
-}
-
-interface CartItemWithProduct {
-  productId: import("mongodb").ObjectId;
-  quantity: number;
-  product: {
-    _id: import("mongodb").ObjectId;
-    title: string;
-    price: number;
-    description: string | null;
-  } | null;
-}
-
-export async function getCartMdb(user: User): Promise<CartItemWithProduct[]> {
-  const doc = await users().findOne(
-    { _id: user._id },
-    { projection: { cart: 1 } },
-  );
-  const items = doc?.cart ?? [];
-  if (items.length === 0) return [];
-
-  const pids = items.map((i) => i.productId);
-  const productDocs = await products()
-    .find(
-      { _id: { $in: pids } },
-      { projection: { _id: 1, title: 1, price: 1, description: 1 } },
-    )
-    .toArray();
-
-  const productMap = new Map(
-    productDocs.map((p) => [p._id.toString(), p]),
-  );
-
-  return items.map((item) => ({
-    productId: item.productId,
-    quantity: item.quantity,
-    product: productMap.get(item.productId.toString()) ?? null,
-  }));
-}
-
-export async function addItemToCartMdb(
-  user: User,
-  productId: string,
-): Promise<CartItemDoc[]> {
-  const pid = toObjectId(productId, "Product");
-
-  const existing = (user.cart ?? []).find(
-    (item) => item.productId.toString() === productId,
-  );
-
-  if (existing) {
-    const result = await users().findOneAndUpdate(
-      { _id: user._id, "cart.productId": pid },
-      { $inc: { "cart.$.quantity": 1 } },
-      { returnDocument: "after", projection: { cart: 1 } },
-    );
-    return updatedCart(result);
-  }
-
-  const exists = await products().countDocuments({ _id: pid }, { limit: 1 });
-  if (!exists) throw new NotFoundError("Product");
-
-  const item: CartItemDoc = {
-    productId: pid,
-    quantity: 1,
-  };
-
-  const result = await users().findOneAndUpdate(
-    { _id: user._id },
-    { $push: { cart: item } },
-    { returnDocument: "after", projection: { cart: 1 } },
-  );
-  return updatedCart(result);
-}
-
-export async function removeItemFromCartMdb(
-  user: User,
-  productId: string,
-  quantity: number,
-): Promise<CartItemDoc[]> {
-  const pid = toObjectId(productId, "Product");
-
-  const existing = (user.cart ?? []).find(
-    (item) => item.productId.toString() === productId,
-  );
-  if (!existing) throw new NotFoundError("Cart item");
-
-  const newQty = existing.quantity - quantity;
-
-  if (newQty <= 0) {
-    const result = await users().findOneAndUpdate(
-      { _id: user._id },
-      { $pull: { cart: { productId: pid } } },
-      { returnDocument: "after", projection: { cart: 1 } },
-    );
-    return updatedCart(result);
-  }
-
-  const result = await users().findOneAndUpdate(
-    { _id: user._id, "cart.productId": pid },
-    { $set: { "cart.$.quantity": newQty } },
-    { returnDocument: "after", projection: { cart: 1 } },
-  );
-  return updatedCart(result);
-}
-
-export async function clearCartMdb(user: User): Promise<void> {
-  await users().updateOne({ _id: user._id }, { $set: { cart: [] } });
-}

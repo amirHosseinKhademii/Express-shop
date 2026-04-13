@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { Types } from "mongoose";
 import { NotFoundError, ValidationError } from "./errors.js";
 
 export function parseId(raw: string | string[] | undefined, resource = "Resource"): number {
@@ -8,9 +8,9 @@ export function parseId(raw: string | string[] | undefined, resource = "Resource
   return id;
 }
 
-export function toObjectId(id: string, label = "Resource"): ObjectId {
-  if (!ObjectId.isValid(id)) {
+export function toObjectId(id: string, label = "Resource"): Types.ObjectId {
+  if (!Types.ObjectId.isValid(id)) {
     throw new ValidationError(`Invalid ${label} ID format`);
   }
-  return new ObjectId(id);
+  return new Types.ObjectId(id);
 }

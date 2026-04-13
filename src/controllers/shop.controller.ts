@@ -2,7 +2,6 @@ import type { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../utils/response.js";
 import { UnauthorizedError } from "../utils/errors.js";
 import { parsePagination } from "../utils/pagination.js";
-import { parseId } from "../utils/parse-id.js";
 import {
   getUserProductsMdb,
   getUserProductByIdMdb,

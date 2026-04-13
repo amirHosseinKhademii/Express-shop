@@ -1,30 +1,47 @@
-// import mongoose from "mongoose";
-// import { config } from "./index.js";
+import mongoose from "mongoose";
+import { config } from "../config/index.js";
 
-// export const connectMongo = async (): Promise<void> => {
-//   try {
-//     await mongoose.connect(config.database.mongoUri, {
-//       maxPoolSize: 10,
-//       serverSelectionTimeoutMS: 5000,
-//       socketTimeoutMS: 45000,
-//     });
+const MONGO_URI = config.database.mongoUri;
 
-//     console.log("MongoDB connected");
-//   } catch (error) {
-//     console.error("MongoDB connection error:", error);
-//     process.exit(1);
-//   }
-// };
+if (!MONGO_URI) {
+  throw new Error("MONGODB_URI environment variable is not defined");
+}
 
-// mongoose.connection.on("disconnected", () => {
-//   console.log("MongoDB disconnected");
-// });
+export const connectMongoose = async (): Promise<typeof mongoose> => {
+  try {
+    const conn = await mongoose.connect(MONGO_URI, {
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      maxIdleTimeMS: 30_000,
+      serverSelectionTimeoutMS: 5_000,
+      socketTimeoutMS: 45_000,
+      retryWrites: true,
+      retryReads: true,
+      autoIndex: config.env !== "production",
+      bufferCommands: false,
+    });
 
-// mongoose.connection.on("error", (err) => {
-//   console.error("MongoDB error:", err);
-// });
+    console.log(`Mongoose connected to ${conn.connection.host}`);
+    return conn;
+  } catch (error) {
+    console.error("Mongoose connection error:", error);
+    process.exit(1);
+  }
+};
 
-// export const closeMongo = async (): Promise<void> => {
-//   await mongoose.connection.close();
-//   console.log("MongoDB connection closed");
-// };
+export const closeMongoose = async (): Promise<void> => {
+  await mongoose.connection.close();
+  console.log("Mongoose connection closed");
+};
+
+mongoose.connection.on("disconnected", () => {
+  console.warn("Mongoose disconnected");
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("Mongoose connection error:", err);
+});
+
+mongoose.connection.on("reconnected", () => {
+  console.log("Mongoose reconnected");
+});
