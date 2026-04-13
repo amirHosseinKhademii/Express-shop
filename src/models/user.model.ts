@@ -86,7 +86,7 @@ UserSchema.methods.clearCart = function () {
 UserSchema.methods.addToCart = function (productId: string, quantity: number) {
   const pid = new Types.ObjectId(productId);
   const existing = this.cart.find(
-    (item: ICartItem) => item.productId.toString() === productId,
+    (item: ICartItem) => item.productId.equals(pid),
   );
 
   if (existing) {
@@ -102,15 +102,16 @@ UserSchema.methods.removeFromCart = function (
   productId: string,
   quantity: number,
 ) {
+  const pid = new Types.ObjectId(productId);
   const existing = this.cart.find(
-    (item: ICartItem) => item.productId.toString() === productId,
+    (item: ICartItem) => item.productId.equals(pid),
   );
 
   if (existing) {
     const newQty = existing.quantity - quantity;
     if (newQty <= 0) {
       this.cart = this.cart.filter(
-        (item: ICartItem) => item.productId.toString() !== productId,
+        (item: ICartItem) => !item.productId.equals(pid),
       );
     } else {
       existing.quantity = newQty;

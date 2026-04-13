@@ -12,7 +12,6 @@ import {
   removeItemFromCartMdb,
 } from "../services/cart.service.js";
 import {
-  createOrderMdb as createOrderService,
   createOrderFromCartMdb as createOrderFromCart,
   getUserOrdersMdb as getUserOrders,
   getOrderByIdMdb as getOrderById,
@@ -118,11 +117,7 @@ export const createOrder = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    const { items, fromCart } = req.body;
-
-    const order = fromCart
-      ? await createOrderFromCart(req.user)
-      : await createOrderService(req.user, items);
+    const order = await createOrderFromCart(req.user);
 
     ApiResponse.created(res, order, "Order placed");
   } catch (error) {

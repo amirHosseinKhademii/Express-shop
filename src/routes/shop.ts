@@ -31,7 +31,7 @@ router.delete(
 );
 
 router.get("/orders", getOrders);
-router.post("/orders", validateRequest(createOrderSchema), createOrder);
+router.post("/orders", createOrder);
 router.get("/orders/:id", validateRequest(orderIdParamSchema), getOrder);
 
 router.get("/:id", validateRequest(productIdParamSchema), getProductById);

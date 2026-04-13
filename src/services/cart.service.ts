@@ -28,14 +28,14 @@ export async function addItemToCartMdb(
   user: User,
   productId: string,
 ): Promise<CartItemWithProduct[]> {
-  toObjectId(productId, "Product");
+  const pid = toObjectId(productId, "Product");
 
   const existing = (user.cart ?? []).find(
-    (item) => item.productId.toString() === productId,
+    (item) => item.productId.equals(pid),
   );
 
   if (!existing) {
-    const exists = await ProductModel.exists({ _id: productId });
+    const exists = await ProductModel.exists({ _id: pid });
     if (!exists) throw new NotFoundError("Product");
   }
 
@@ -48,10 +48,10 @@ export async function removeItemFromCartMdb(
   productId: string,
   quantity: number,
 ): Promise<CartItemWithProduct[]> {
-  toObjectId(productId, "Product");
+  const pid = toObjectId(productId, "Product");
 
   const existing = (user.cart ?? []).find(
-    (item) => item.productId.toString() === productId,
+    (item) => item.productId.equals(pid),
   );
   if (!existing) throw new NotFoundError("Cart item");
 

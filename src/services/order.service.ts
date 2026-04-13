@@ -15,10 +15,10 @@ type OrderDoc = HydratedDocument<IOrder>;
 
 // ─── Mongoose order services ─────────────────────────────────
 
-interface OrderInputMdb {
-  productId: string;
-  quantity: number;
-}
+// interface OrderInputMdb {
+//   productId: string;
+//   quantity: number;
+// }
 
 async function resolveProductPrices(
   pids: Types.ObjectId[],
@@ -37,47 +37,47 @@ async function computeTotal(items: IOrderItem[]): Promise<number> {
   }, 0);
 }
 
-export async function createOrderMdb(
-  user: User,
-  items: OrderInputMdb[],
-): Promise<OrderDoc> {
-  if (items.length === 0) {
-    throw new ValidationError("Order must contain at least one item");
-  }
+// export async function createOrderMdb(
+//   user: User,
+//   items: OrderInputMdb[],
+// ): Promise<OrderDoc> {
+//   if (items.length === 0) {
+//     throw new ValidationError("Order must contain at least one item");
+//   }
 
-  const pids = items.map((i) => toObjectId(i.productId, "Product"));
-  const quantityMap = new Map(items.map((i) => [i.productId, i.quantity]));
+//   const pids = items.map((i) => toObjectId(i.productId, "Product"));
+//   const quantityMap = new Map(items.map((i) => [i.productId, i.quantity]));
 
-  const foundProducts = await ProductModel.find({
-    _id: { $in: pids },
-    userId: user._id,
-  })
-    .select("_id")
-    .lean();
+//   const foundProducts = await ProductModel.find({
+//     _id: { $in: pids },
+//     userId: user._id,
+//   })
+//     .select("_id")
+//     .lean();
 
-  if (foundProducts.length !== pids.length) {
-    const foundIds = new Set(foundProducts.map((p) => p._id.toString()));
-    const missing = items
-      .filter((i) => !foundIds.has(i.productId))
-      .map((i) => i.productId);
-    throw new NotFoundError(
-      `Products not found or not owned: ${missing.join(", ")}`,
-    );
-  }
+//   if (foundProducts.length !== pids.length) {
+//     const foundIds = new Set(foundProducts.map((p) => p._id.toString()));
+//     const missing = items
+//       .filter((i) => !foundIds.has(i.productId))
+//       .map((i) => i.productId);
+//     throw new NotFoundError(
+//       `Products not found or not owned: ${missing.join(", ")}`,
+//     );
+//   }
 
-  const orderItems: IOrderItem[] = pids.map((pid) => ({
-    productId: pid,
-    quantity: quantityMap.get(pid.toString())!,
-  }));
+//   const orderItems: IOrderItem[] = pids.map((pid) => ({
+//     productId: pid,
+//     quantity: quantityMap.get(pid.toString())!,
+//   }));
 
-  const total = await computeTotal(orderItems);
+//   const total = await computeTotal(orderItems);
 
-  return OrderModel.create({
-    userId: user._id,
-    items: orderItems,
-    total,
-  });
-}
+//   return OrderModel.create({
+//     userId: user._id,
+//     items: orderItems,
+//     total,
+//   });
+// }
 
 export async function createOrderFromCartMdb(user: User): Promise<OrderDoc> {
   const cartItems = await getCartMdb(user);
