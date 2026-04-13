@@ -8,7 +8,7 @@ import {
 import { ProductModel } from "../models/product.model.js";
 import { NotFoundError, ValidationError } from "../utils/errors.js";
 import { toObjectId } from "../utils/parse-id.js";
-import { getCartMdb, clearCartMdb } from "./cart.service.js";
+import { getCartMdb } from "./cart.service.js";
 
 type User = NonNullable<Request["user"]>;
 type OrderDoc = HydratedDocument<IOrder>;
@@ -99,7 +99,7 @@ export async function createOrderFromCartMdb(user: User): Promise<OrderDoc> {
     total,
   });
 
-  await clearCartMdb(user);
+  await user.clearCart();
   return order;
 }
 

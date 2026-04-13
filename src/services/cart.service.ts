@@ -59,10 +59,6 @@ export async function removeItemFromCartMdb(
   return getCartMdb(user);
 }
 
-export async function clearCartMdb(user: User): Promise<void> {
-  await user.clearCart();
-}
-
 // ─── Sequelize (commented out) ────────────────────────────────
 
 // const CART_INCLUDE = [
