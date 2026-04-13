@@ -4,20 +4,19 @@ import { UnauthorizedError } from "../utils/errors.js";
 import { parsePagination } from "../utils/pagination.js";
 import { parseId } from "../utils/parse-id.js";
 import {
-  getUserProducts,
-  getUserProductById,
+  getUserProductsMdb,
+  getUserProductByIdMdb,
 } from "../services/product.service.js";
 import {
-  getOrCreateCart,
-  loadCartWithItems,
-  addItemToCart,
-  removeItemFromCart,
+  getCartMdb,
+  addItemToCartMdb,
+  removeItemFromCartMdb,
 } from "../services/cart.service.js";
 import {
-  createOrder as createOrderService,
-  createOrderFromCart,
-  getUserOrders,
-  getOrderById,
+  createOrderMdb as createOrderService,
+  createOrderFromCartMdb as createOrderFromCart,
+  getUserOrdersMdb as getUserOrders,
+  getOrderByIdMdb as getOrderById,
 } from "../services/order.service.js";
 
 export const getProducts = async (
@@ -29,7 +28,10 @@ export const getProducts = async (
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
     const { page, limit, offset } = parsePagination(req);
-    const { rows, count } = await getUserProducts(req.user, { limit, offset });
+    const { rows, count } = await getUserProductsMdb(req.user, {
+      limit,
+      offset,
+    });
 
     ApiResponse.paginated(res, rows, page, limit, count);
   } catch (error) {
@@ -45,8 +47,10 @@ export const getProductById = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    const id = parseId(req.params["id"], "Product");
-    const product = await getUserProductById(req.user, id);
+    const product = await getUserProductByIdMdb(
+      req.user,
+      req.params["id"] as string,
+    );
 
     ApiResponse.success(res, product);
   } catch (error) {
@@ -62,10 +66,9 @@ export const getCart = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    const cart = await getOrCreateCart(req.user);
-    const cartWithItems = await loadCartWithItems(cart);
+    const cart = await getCartMdb(req.user);
 
-    ApiResponse.success(res, cartWithItems);
+    ApiResponse.success(res, cart);
   } catch (error) {
     next(error);
   }
@@ -79,11 +82,9 @@ export const addProductToCart = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    const productId = parseId(req.body["productId"], "Product");
-    const quantity = Math.max(parseInt(req.body["quantity"]) || 1, 1);
+    const productId = req.body["productId"] as string;
 
-    const cart = await getOrCreateCart(req.user);
-    const updated = await addItemToCart(req.user, cart, productId, quantity);
+    const updated = await addItemToCartMdb(req.user, productId);
 
     ApiResponse.success(res, updated, "Product added to cart");
   } catch (error) {
@@ -99,11 +100,10 @@ export const removeProductFromCart = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    const productId = parseId(req.body["productId"], "Product");
+    const productId = req.body["productId"] as string;
     const quantity = Math.max(parseInt(req.body["quantity"]) || 1, 1);
 
-    const cart = await getOrCreateCart(req.user);
-    const updated = await removeItemFromCart(cart, productId, quantity);
+    const updated = await removeItemFromCartMdb(req.user, productId, quantity);
 
     ApiResponse.success(res, updated, "Product removed from cart");
   } catch (error) {
@@ -156,8 +156,7 @@ export const getOrder = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    const id = parseId(req.params["id"], "Order");
-    const order = await getOrderById(req.user.id, id);
+    const order = await getOrderById(req.user.id, req.params["id"] as string);
 
     ApiResponse.success(res, order);
   } catch (error) {

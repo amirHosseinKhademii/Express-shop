@@ -40,19 +40,7 @@ const coerceInt = (fieldName: string) =>
   );
 
 const cartItemBodySchema = z.object({
-  productId: coerceInt("Product ID").pipe(
-    z.number().positive("Product ID must be a positive integer"),
-  ),
-  quantity: z.preprocess(
-    (val) => (val === undefined || val === null ? undefined : Number(val)),
-    z
-      .number({ invalid_type_error: "Quantity must be a valid number" })
-      .int("Quantity must be a whole number")
-      .min(1, "Quantity must be at least 1")
-      .max(999, "Quantity cannot exceed 999")
-      .optional()
-      .default(1),
-  ),
+  productId: z.string(),
 });
 
 export const addProductToCartSchema = z.object({ body: cartItemBodySchema });
@@ -79,7 +67,11 @@ const orderItemSchema = z.object({
 
 const fromCartBody = z.object({
   fromCart: z.literal(true),
-  items: z.undefined({ invalid_type_error: "Items are not needed when ordering from cart" }).optional(),
+  items: z
+    .undefined({
+      invalid_type_error: "Items are not needed when ordering from cart",
+    })
+    .optional(),
 });
 
 const fromItemsBody = z.object({
@@ -95,7 +87,9 @@ const fromItemsBody = z.object({
 
 export const createOrderSchema = z.object({
   body: z.union([fromCartBody, fromItemsBody], {
-    errorMap: () => ({ message: "Provide items array or set fromCart to true" }),
+    errorMap: () => ({
+      message: "Provide items array or set fromCart to true",
+    }),
   }),
 });
 

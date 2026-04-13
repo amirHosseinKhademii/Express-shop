@@ -70,10 +70,7 @@ type ProductInstance = Model<ProductAttributes, Partial<ProductAttributes>> &
     getCarts: (options?: FindOptions) => Promise<CartInstance[]>;
   };
 
-type CartItemInstance = Model<
-  CartItemAttributes,
-  Partial<CartItemAttributes>
-> &
+type CartItemInstance = Model<CartItemAttributes, Partial<CartItemAttributes>> &
   CartItemAttributes;
 
 type OrderItemInstance = Model<
@@ -147,10 +144,23 @@ type UserInstance = Model<UserAttributes, Partial<UserAttributes>> &
 
 // ─── Express augmentation ────────────────────────────────────────
 
+interface CartItemDoc {
+  productId: import("mongodb").ObjectId;
+  quantity: number;
+}
+
+interface MongoUser {
+  _id: import("mongodb").ObjectId;
+  id: string;
+  email: string;
+  name: string;
+  cart: CartItemDoc[];
+}
+
 declare global {
   namespace Express {
     interface Request {
-      user?: UserInstance;
+      user?: MongoUser;
       requestId?: string;
     }
   }

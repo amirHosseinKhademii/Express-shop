@@ -4,9 +4,6 @@ import { ApiResponse } from "../utils/response.js";
 import { ConflictError, UnauthorizedError } from "../utils/errors.js";
 import { parseId } from "../utils/parse-id.js";
 import {
-  createProduct,
-  updateProduct as updateProductService,
-  deleteProduct as deleteProductService,
   createProductMdb,
   updateProductMdb,
   deleteProductMdb,
@@ -20,7 +17,6 @@ export const addProduct = async (
   try {
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
-    //const product = await createProduct(req.user, req.body);
     const product = await createProductMdb(req.user, req.body);
 
     ApiResponse.created(res, product, "Product added");
@@ -42,8 +38,7 @@ export const updateProduct = async (
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
     const productId = req.params["id"] as string;
-    //const id = parseId(req.params["id"], "Product");
-    //const product = await updateProductService(req.user, id, req.body);
+
     const product = await updateProductMdb(req.user, productId, req.body);
 
     ApiResponse.success(res, product, "Product updated");
@@ -65,8 +60,7 @@ export const deleteProduct = async (
     if (!req.user) throw new UnauthorizedError("Authentication required");
 
     const productId = req.params["id"] as string;
-    //const id = parseId(req.params["id"], "Product");
-    //await deleteProductService(req.user, id);
+
     await deleteProductMdb(req.user, productId);
 
     ApiResponse.noContent(res);

@@ -1,8 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import type { Model } from "sequelize";
-import { User } from "../models/index.js";
+import { mdb } from "../database/mongodb.js";
 
-let cachedUser: Model | null = null;
+type User = NonNullable<Request["user"]>;
+
+let cachedUser: User | null = null;
 
 export const attachUser = async (
   req: Request,
@@ -11,18 +12,29 @@ export const attachUser = async (
 ): Promise<void> => {
   try {
     if (!cachedUser) {
-      const user = await User.findOne({
-        attributes: ["id", "email", "name"],
-      });
+      const collection = mdb.collection<User>("users");
+
+      const user = await collection.findOne(
+        {},
+        { projection: { _id: 1, id: 1, email: 1, name: 1, cart: 1 } },
+      );
 
       if (user) {
+        if (!user.cart) user.cart = [];
         cachedUser = user;
+      } else {
+        const seed: Omit<User, "_id"> = {
+          id: "default",
+          email: "test@test.com",
+          name: "Test User",
+          cart: [],
+        };
+        const { insertedId } = await collection.insertOne(seed as User);
+        cachedUser = { _id: insertedId, ...seed };
       }
     }
 
-    if (cachedUser) {
-      req.user = cachedUser as Request["user"];
-    }
+    req.user = cachedUser;
 
     next();
   } catch (error) {
