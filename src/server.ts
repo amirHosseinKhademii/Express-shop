@@ -1,12 +1,9 @@
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
 import { closeMongo, connectMongo } from "./database/mongodb.js";
-import { connectSequelize, closeSequelize } from "./database/sequelize.js";
 
 const start = async (): Promise<void> => {
   const app = createApp();
-
-  // await connectSequelize();
   await connectMongo();
 
   const server = app.listen(config.port, () => {
@@ -16,7 +13,6 @@ const start = async (): Promise<void> => {
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received. Shutting down gracefully...`);
     server.close(async () => {
-      // await closeSequelize();
       await closeMongo();
       console.log("Server closed");
       process.exit(0);
