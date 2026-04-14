@@ -10,6 +10,7 @@ import { requestTimeout } from "./middleware/timeout.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { attachUser } from "./middleware/attach-user.js";
+import { csrfSynchronisedProtection } from "./middleware/csrf.js";
 import routes from "./routes/index.js";
 import session from "express-session";
 import { sessionStore } from "./database/mongoose.js";
@@ -41,7 +42,7 @@ export const createApp = (): Express => {
     cors({
       origin: process.env["ALLOWED_ORIGINS"]?.split(",") ?? "*",
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
       credentials: true,
       maxAge: 86400,
     }),
@@ -83,6 +84,7 @@ export const createApp = (): Express => {
   // Mount all /api routes behind the rate limiter:
   // 100 requests per 15 min per IP. Prevents brute-force and abuse.
   app.use(attachUser);
+  app.use(csrfSynchronisedProtection);
   app.use("/api", apiLimiter, routes);
 
   // Centralized error handler — must be registered LAST so it catches
