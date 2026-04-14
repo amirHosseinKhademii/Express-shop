@@ -1,8 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
+import { Types } from "mongoose";
 import { UserModel } from "../models/user.model.js";
-import type { UserDoc } from "../types/express.js";
-
-let cachedUser: UserDoc | null = null;
 
 export const attachUser = async (
   req: Request,
@@ -10,21 +8,16 @@ export const attachUser = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    if (!cachedUser) {
-      const user = await UserModel.findOne().lean(false);
+    const userId = req.session?.userId;
 
-      if (user) {
-        cachedUser = user;
-      } else {
-        cachedUser = await UserModel.create({
-          email: "test@test.com",
-          name: "Test User",
-          cart: [],
-        });
-      }
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      return next();
     }
 
-    req.user = cachedUser;
+    const user = await UserModel.findById(userId);
+    if (user) {
+      req.user = user;
+    }
 
     next();
   } catch (error) {

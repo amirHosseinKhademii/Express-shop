@@ -1,7 +1,10 @@
 // import { sequelize } from "../database/sequelize.js";
 // import { DataTypes } from "sequelize";
 import { Schema, model, type Model, Types } from "mongoose";
+import bcrypt from "bcrypt";
 import { CartItemSchema, type ICartItem } from "./cart.model.js";
+
+const SALT_ROUNDS = 12;
 
 // ─── Sequelize (commented out) ────────────────────────────────
 // export const User = sequelize.define("user", {
@@ -46,6 +49,7 @@ export interface PopulatedCartItem {
 }
 
 export interface IUserMethods {
+  comparePassword(candidate: string): Promise<boolean>;
   getCart(): Promise<PopulatedCartItem[]>;
   clearCart(): Promise<IUser>;
   addToCart(productId: string, quantity: number): Promise<IUser>;
@@ -55,6 +59,7 @@ export interface IUserMethods {
 export interface IUser {
   email: string;
   name: string;
+  password: string;
   cart: ICartItem[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -66,12 +71,23 @@ const UserSchema = new Schema<
   IUserMethods
 >(
   {
-    email: { type: String, required: true, unique: true },
-    name: { type: String, required: true, minlength: 3, maxlength: 30 },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    name: { type: String, required: true, minlength: 3, maxlength: 30, trim: true },
+    password: { type: String, required: true, minlength: 8, select: false },
     cart: { type: [CartItemSchema], default: [] },
   },
   { timestamps: true },
 );
+
+UserSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+  next();
+});
+
+UserSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
+  return bcrypt.compare(candidate, this.password);
+};
 
 UserSchema.methods.getCart = async function (): Promise<PopulatedCartItem[]> {
   await this.populate("cart.productId", "title price description");

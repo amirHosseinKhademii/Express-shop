@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import session from "express-session";
+import connectMongoDBSession from "connect-mongodb-session";
 import { config } from "../config/index.js";
 
 const MONGO_URI = config.database.mongoUri;
@@ -6,6 +8,13 @@ const MONGO_URI = config.database.mongoUri;
 if (!MONGO_URI) {
   throw new Error("MONGODB_URI environment variable is not defined");
 }
+
+const MongoDBStore = connectMongoDBSession(session);
+
+export const sessionStore = new MongoDBStore({
+  uri: MONGO_URI,
+  collection: "sessions",
+});
 
 export const connectMongoose = async (): Promise<typeof mongoose> => {
   try {
