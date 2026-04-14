@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import hpp from "hpp";
 import mongoSanitize from "express-mongo-sanitize";
 import { apiLimiter } from "./middleware/rate-limit.js";
@@ -47,6 +48,7 @@ export const createApp = (): Express => {
   // from consuming memory (default is 100kb — 10mb is generous for file uploads).
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+  app.use(cookieParser());
 
   // HPP: blocks HTTP Parameter Pollution — duplicate query params like
   // ?sort=name&sort=email get collapsed so downstream code sees a single value.
