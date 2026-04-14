@@ -31,24 +31,38 @@ spec:
             mountPath: /data/db
       volumes:
         - name: mongo-persistent-storage
-          hostPath:
-            path: /mnt/some/directory-storage
-            type: DirectoryOrCreate
-          # persistentVolumeClaim:
-          #   claimName: mongo-pvc
+          persistentVolumeClaim:
+            claimName: mongo-pvc
 
-# ---
+---
 
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: mongo-pvc
-# spec:
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 1Gi
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+spec:
+  storageClassName: my-local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-storage
+spec:
+  storageClassName: my-local-storage
+  hostPath:
+    path: "/mnt/some/directory/structure/"
+    type: DirectoryOrCreate
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
 
 ---
 
