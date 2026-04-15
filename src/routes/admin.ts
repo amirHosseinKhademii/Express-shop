@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { validateRequest } from "../middleware/validate-request.js";
+import { handleValidation } from "../middleware/validate-request.js";
 import {
-  createProductSchema,
-  updateProductSchema,
-  productIdParamSchema,
+  createProductRules,
+  updateProductRules,
+  productIdParamRules,
 } from "../schemas/product.schema.js";
 import {
   addProduct,
@@ -13,17 +13,19 @@ import {
 
 const router = Router();
 
-router.post("/products", validateRequest(createProductSchema), addProduct);
+router.post("/products", createProductRules, handleValidation, addProduct);
 
 router.put(
   "/products/:id",
-  validateRequest(updateProductSchema),
+  updateProductRules,
+  handleValidation,
   updateProduct,
 );
 
 router.delete(
   "/products/:id",
-  validateRequest(productIdParamSchema),
+  productIdParamRules,
+  handleValidation,
   deleteProduct,
 );
 

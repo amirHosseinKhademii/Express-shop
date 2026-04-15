@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { validateRequest } from "../middleware/validate-request.js";
+import { handleValidation } from "../middleware/validate-request.js";
 import {
-  productIdParamSchema,
-  addProductToCartSchema,
-  removeProductFromCartSchema,
-  createOrderSchema,
-  orderIdParamSchema,
+  productIdParamRules,
+  addProductToCartRules,
+  removeProductFromCartRules,
+  createOrderRules,
+  orderIdParamRules,
 } from "../schemas/product.schema.js";
 import {
   getProducts,
@@ -23,17 +23,18 @@ const router = Router();
 router.get("/", getProducts);
 
 router.get("/cart", getCart);
-router.post("/cart", validateRequest(addProductToCartSchema), addProductToCart);
+router.post("/cart", addProductToCartRules, handleValidation, addProductToCart);
 router.delete(
   "/cart",
-  validateRequest(removeProductFromCartSchema),
+  removeProductFromCartRules,
+  handleValidation,
   removeProductFromCart,
 );
 
 router.get("/orders", getOrders);
-router.post("/orders", createOrder);
-router.get("/orders/:id", validateRequest(orderIdParamSchema), getOrder);
+router.post("/orders", createOrderRules, handleValidation, createOrder);
+router.get("/orders/:id", orderIdParamRules, handleValidation, getOrder);
 
-router.get("/:id", validateRequest(productIdParamSchema), getProductById);
+router.get("/:id", productIdParamRules, handleValidation, getProductById);
 
 export { router as shopRoutes };

@@ -6,12 +6,12 @@ import {
   forgotPassword,
   resetPasswordHandler,
 } from "../controllers/auth.controller.js";
-import { validateRequest } from "../middleware/validate-request.js";
+import { handleValidation } from "../middleware/validate-request.js";
 import {
-  registerSchema,
-  loginSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
+  registerRules,
+  loginRules,
+  forgotPasswordRules,
+  resetPasswordRules,
 } from "../schemas/auth.schema.js";
 import { generateToken } from "../middleware/csrf.js";
 
@@ -21,10 +21,10 @@ router.get("/csrf-token", (req, res) => {
   res.json({ csrfToken: generateToken(req) });
 });
 
-router.post("/register", validateRequest(registerSchema), register);
-router.post("/login", validateRequest(loginSchema), login);
+router.post("/register", registerRules, handleValidation, register);
+router.post("/login", loginRules, handleValidation, login);
 router.post("/logout", logout);
-router.post("/forgot-password", validateRequest(forgotPasswordSchema), forgotPassword);
-router.post("/reset-password", validateRequest(resetPasswordSchema), resetPasswordHandler);
+router.post("/forgot-password", forgotPasswordRules, handleValidation, forgotPassword);
+router.post("/reset-password", resetPasswordRules, handleValidation, resetPasswordHandler);
 
 export { router as authRoutes };
