@@ -60,6 +60,8 @@ export interface IUser {
   email: string;
   name: string;
   password: string;
+  resetToken?: string;
+  resetTokenExpiresAt?: Date;
   cart: ICartItem[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -74,6 +76,8 @@ const UserSchema = new Schema<
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true, minlength: 3, maxlength: 30, trim: true },
     password: { type: String, required: true, minlength: 8, select: false },
+    resetToken: { type: String, select: false },
+    resetTokenExpiresAt: { type: Date, select: false },
     cart: { type: [CartItemSchema], default: [] },
   },
   { timestamps: true },
