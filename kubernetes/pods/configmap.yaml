@@ -1,0 +1,25 @@
+# ConfigMap: holds non-secret configuration shared by multiple Deployments.
+# Benefits of centralizing:
+#   - Single source of truth — change the Spring profile once, all consumers pick it up on next rollout.
+#   - Keeps Deployment manifests focused on workload shape, not config values.
+#   - Can be swapped per-environment (dev/stage/prod) via kustomize overlays or Helm values
+#     without touching the Deployments themselves.
+# Note: ConfigMaps are NOT for secrets (API keys, passwords, certs) — use `kind: Secret` for those.
+#
+# Apply order: this file MUST be applied before workloads.yaml, otherwise Pods will fail to start with
+# `configmap "fleetman-config" not found`. If you apply the whole directory with
+# `kubectl apply -f kubernetes/pods/` Kubernetes will sort by filename, so `configmap.yaml`
+# is applied before `workloads.yaml` alphabetically — no extra work needed.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # Name referenced by each Deployment's env.valueFrom.configMapKeyRef.name in workloads.yaml.
+  name: fleetman-config
+  labels:
+    app: fleetman
+# `data` holds string key/value pairs. Keys become env var names (or filenames, if mounted as a volume).
+data:
+  # The Spring profile every fleetman microservice should activate.
+  # Changing this value and re-applying requires a rollout (e.g. `kubectl rollout restart deployment/...`)
+  # because Pods don't automatically re-read env vars from a ConfigMap — env is injected at container start.
+  SPRING_PROFILES_ACTIVE: production-microservice

@@ -1,3 +1,5 @@
+# Shared config for the fleetman microservices lives in `configmap.yaml` (same directory).
+# Apply it first — or just `kubectl apply -f kubernetes/pods/` to apply the whole directory at once.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,8 +20,14 @@ spec:
       - name: webapp
         image: richardchesterwood/k8s-fleetman-webapp-angular:release2
         env:
+          # Pull the env var from the shared `fleetman-config` ConfigMap (see configmap.yaml) instead of hard-coding.
           - name: SPRING_PROFILES_ACTIVE
-            value: production-microservice
+            valueFrom:
+              configMapKeyRef:
+                # Name of the ConfigMap (must exist in the same namespace before this Pod starts).
+                name: fleetman-config
+                # Key inside the ConfigMap's `data` block to read from.
+                key: SPRING_PROFILES_ACTIVE
         ports:
           - containerPort: 80
         resources:
@@ -53,7 +61,10 @@ spec:
         image: richardchesterwood/k8s-fleetman-position-simulator:release2
         env:
           - name: SPRING_PROFILES_ACTIVE
-            value: production-microservice
+            valueFrom:
+              configMapKeyRef:
+                name: fleetman-config
+                key: SPRING_PROFILES_ACTIVE
         resources:
           requests:
             cpu: "100m"
@@ -87,7 +98,10 @@ spec:
           - containerPort: 8080
         env:
           - name: SPRING_PROFILES_ACTIVE
-            value: production-microservice
+            valueFrom:
+              configMapKeyRef:
+                name: fleetman-config
+                key: SPRING_PROFILES_ACTIVE
         resources:
           requests:
             cpu: "200m"
@@ -170,10 +184,18 @@ spec:
           - containerPort: 8080
         # Environment variables injected into the container process at startup.
         env:
-          # A single env var entry.
+          # Env var sourced from the shared `fleetman-config` ConfigMap (defined in configmap.yaml).
+          # Using valueFrom.configMapKeyRef (instead of a literal `value:`) centralizes config so the
+          # Spring profile can be changed in ONE place and picked up by every Deployment on next rollout.
           - name: SPRING_PROFILES_ACTIVE
-            # Activates the "production-microservice" Spring profile so the app uses prod config.
-            value: production-microservice
+            # `valueFrom` tells Kubernetes to resolve the value at container-start time from another source.
+            valueFrom:
+              # Source the value from a key inside a ConfigMap.
+              configMapKeyRef:
+                # Name of the ConfigMap (must exist in the same namespace as this Pod).
+                name: fleetman-config
+                # Which key inside that ConfigMap's `data` map to read. Missing key → container fails to start.
+                key: SPRING_PROFILES_ACTIVE
         # CPU/memory guarantees and caps. Critical for scheduling, HPA, and preventing noisy-neighbor issues.
         resources:
           # Minimum resources reserved for this container on its node. Scheduler uses this to place the Pod.
