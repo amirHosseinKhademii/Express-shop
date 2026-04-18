@@ -1,0 +1,38 @@
+# Ingress: an HTTP(S) L7 router that lives in front of your Services.
+# Routes external traffic (via the NGINX ingress controller) to the right Service based on host + path.
+# Requires an ingress controller to be running in the cluster — on minikube:  `minikube addons enable ingress`.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fleetman-ingress
+  labels:
+    app: fleetman
+spec:
+  # Which ingress controller should handle this resource. "nginx" matches minikube's built-in
+  # ingress-nginx controller (installed by `minikube addons enable ingress`).
+  # If multiple controllers run in the cluster, this is how each Ingress picks one.
+  ingressClassName: nginx
+  rules:
+    # The hostname clients connect to. Must resolve to the ingress controller's IP
+    # (on Docker-driver minikube/macOS, point `fleetman.local` at 127.0.0.1 in /etc/hosts
+    #  and run `sudo minikube tunnel` in a separate terminal).
+    - host: fleetman.local
+      http:
+        paths:
+          # Route /api/* to the api-gateway Service. More specific paths must come BEFORE
+          # the catch-all "/" below, because NGINX evaluates paths in order of specificity.
+          - pathType: Prefix
+            path: /api
+            backend:
+              service:
+                name: fleetman-api-gateway
+                port:
+                  number: 8080
+          # Catch-all: everything else goes to the Angular webapp.
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: fleetman-webapp
+                port:
+                  number: 80
