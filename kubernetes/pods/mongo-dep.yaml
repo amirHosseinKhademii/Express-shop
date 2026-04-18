@@ -1,58 +1,102 @@
+# Stable API group/version for workload controllers like Deployment.
 apiVersion: apps/v1
+# Deployment manages a replicated, self-healing set of Pods. Note: for a real database,
+# a StatefulSet is usually preferred (stable Pod identity, ordered rollout, per-Pod PVCs).
 kind: Deployment
+# Identifying information for this Deployment object.
 metadata:
+  # Unique name within the namespace; used by kubectl and referenced elsewhere (e.g. HPAs).
   name: mongodb
+  # Labels on the Deployment itself (not the Pods). Useful for organizing/filtering objects.
   labels:
     app: mongodb
+# Desired state of the Deployment.
 spec:
+  # Single MongoDB instance. A real production setup would run a ReplicaSet (3+ members)
+  # via StatefulSet, not a single-replica Deployment — this has no HA or failover.
   replicas: 1
+  # Tells the Deployment which Pods it owns. MUST be a subset of the labels in the template below.
   selector:
+    # Equality-based match on Pod labels.
     matchLabels:
       app: mongodb
+  # Pod template — the blueprint used to stamp out replicas.
   template:
+    # Metadata applied to every Pod created from this template.
     metadata:
+      # Labels on each Pod. Must include everything in spec.selector.matchLabels above,
+      # and these are what the Service below will select on.
       labels:
         app: mongodb
+    # The actual Pod specification.
     spec:
+      # List of containers that run in each Pod.
       containers:
+      # First (and only) container in the Pod.
       - name: mongodb
+        # Official MongoDB image, pinned to major version 4.4.
+        # Pinning a minor/patch version (e.g. mongo:4.4.29) is safer for reproducibility.
         image: mongo:4.4
+        # Ports the container process listens on. Informational; used by Services/probes for targeting.
         ports:
+          # MongoDB's default wire-protocol port.
           - containerPort: 27017
+        # Mounts a volume (defined below) into the container's filesystem.
         volumeMounts:
+          # Must match a name in spec.volumes below.
           - name: mongo-persistent-storage
+            # Path inside the container. /data/db is MongoDB's default data directory,
+            # so mounting persistent storage here is what survives Pod restarts.
             mountPath: /data/db
+        # Resource guarantees and caps for this container.
+        resources:
+          # Minimum reserved at scheduling time; HPA percentages (if any) are measured against these.
+          requests:
+            # 250 milli-cores = 0.25 vCPU reserved.
+            cpu: "250m"
+            # 512 MiB of RAM reserved — floor for the MongoDB process + WiredTiger cache.
+            memory: "512Mi"
+          # Hard ceilings at runtime.
+          limits:
+            # Throttled above 1 vCPU. CPU overages cause throttling, not kills.
+            cpu: "1000m"
+            # Killed (OOMKilled) if it exceeds 1 GiB. Tune this carefully for databases —
+            # WiredTiger's cache defaults to ~50% of (RAM - 1GB), so low memory limits can hurt performance.
+            memory: "1Gi"
+      # Pod-level volumes available to mount into any container in the Pod.
       volumes:
+        # Volume definition — the name is referenced by volumeMounts above.
         - name: mongo-persistent-storage
+          # Bind this volume to a PVC (defined below) so data survives Pod restarts/rescheduling.
           persistentVolumeClaim:
+            # Name of the PVC to claim. Must exist in the same namespace.
             claimName: mongo-pvc
 
 ---
 
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: ebs-gp3
-provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
-  fsType: ext4
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Retain
-allowVolumeExpansion: true
-
----
-
+# Core API group for built-in resources like Pod, Service, PVC.
 apiVersion: v1
+# PersistentVolumeClaim = a request for storage. Kubernetes binds it to a matching PersistentVolume
+# (either pre-provisioned or dynamically created via the StorageClass).
 kind: PersistentVolumeClaim
 metadata:
+  # Name referenced by the Deployment's volumes.persistentVolumeClaim.claimName above.
   name: mongo-pvc
 spec:
-  storageClassName: ebs-gp3
+  # Which StorageClass to use for dynamic provisioning. "standard" is the common default on
+  # minikube / many managed clusters; on GKE/EKS/AKS the exact names differ (e.g. "gp2", "gp3").
+  storageClassName: standard
+  # How the volume can be mounted.
   accessModes:
+    # ReadWriteOnce = mountable read-write by a SINGLE node at a time. Appropriate for a single MongoDB Pod;
+    # would block running multiple Pods across nodes sharing this PVC. Other modes: ReadOnlyMany, ReadWriteMany, ReadWriteOncePod.
     - ReadWriteOnce
+  # Size request for the volume.
   resources:
+    # "requests" here is the minimum storage size — the bound PV must be >= this value.
     requests:
+      # 5 GiB of disk. Note: most CSI drivers do NOT shrink volumes; growing later may or may not be supported
+      # depending on the StorageClass (`allowVolumeExpansion: true`).
       storage: 5Gi
 
 ---

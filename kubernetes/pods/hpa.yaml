@@ -1,0 +1,185 @@
+# API group/version for the HPA object. "autoscaling/v2" is required for multi-metric support and the `behavior` block.
+apiVersion: autoscaling/v2
+# Object kind: HPA watches a target workload and scales its replica count based on metrics.
+kind: HorizontalPodAutoscaler
+# Identifying information for this HPA.
+metadata:
+  # Name of the HPA; conventionally matches the Deployment it scales.
+  name: webapp
+# Desired behavior of the autoscaler.
+spec:
+  # Which workload this HPA should scale.
+  scaleTargetRef:
+    # API group/version of the target object.
+    apiVersion: apps/v1
+    # The kind of the target — Deployment, StatefulSet, or ReplicaSet are all valid.
+    kind: Deployment
+    # Name of the target workload (must exist in the same namespace as the HPA).
+    name: webapp
+  # Floor on replicas: HPA will never scale below this, even if metrics are very low. Keeps basic HA.
+  minReplicas: 2
+  # Ceiling on replicas: HPA will never scale above this, even under extreme load. Prevents runaway scaling / cost blowups.
+  maxReplicas: 8
+  # One or more metrics the HPA evaluates. If multiple are listed, HPA picks the one demanding the MOST replicas.
+  metrics:
+    # "Resource" = built-in CPU/memory metrics from metrics-server (no external adapter needed).
+    - type: Resource
+      # Describes which resource and what target to aim for.
+      resource:
+        # Scale based on CPU. Could also be "memory" (note: memory-based scaling is tricky due to caches/GC).
+        name: cpu
+        # The target definition the HPA tries to maintain.
+        target:
+          # "Utilization" = percentage of the container's CPU *request*. Requires resources.requests.cpu on the Pods.
+          # Alternatives: "AverageValue" (absolute, e.g. 500m) or "Value" (for non-resource metrics).
+          type: Utilization
+          # Target average CPU usage across all Pods at 70% of their request. Above 70% → scale up, below → scale down.
+          averageUtilization: 70
+  # Fine-grained control over HOW FAST the HPA scales in each direction. (v2 only.)
+  behavior:
+    # Rules applied when the HPA decides to ADD replicas.
+    scaleUp:
+      # Look at the max recommended replicas over the last 30s and use that. Short window = reacts quickly to spikes.
+      stabilizationWindowSeconds: 30
+      # List of scaling policies; with selectPolicy below, the HPA picks one to apply each cycle.
+      policies:
+        # Policy A: allow doubling the replica count...
+        - type: Percent
+          # ...by up to 100% (i.e. 2x)...
+          value: 100
+          # ...within any 30-second window.
+          periodSeconds: 30
+        # Policy B: or allow adding a fixed number of Pods...
+        - type: Pods
+          # ...up to 2 new Pods...
+          value: 2
+          # ...within any 30-second window.
+          periodSeconds: 30
+      # When both policies apply, use the MORE aggressive one (lets small deployments still add 2 Pods, large ones still double).
+      selectPolicy: Max
+    # Rules applied when the HPA decides to REMOVE replicas.
+    scaleDown:
+      # Wait 5 minutes of sustained low usage before scaling down. Prevents flapping after traffic dips.
+      stabilizationWindowSeconds: 300
+      # Only one policy here → it's always the one that's applied.
+      policies:
+        # Allow removing up to 50% of current Pods per minute. Gradual scale-down avoids dropping capacity too fast.
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+
+---
+
+# API group/version for PodDisruptionBudget. "policy/v1" is the stable version.
+apiVersion: policy/v1
+# PDB tells Kubernetes how many Pods of a workload MUST stay available during VOLUNTARY disruptions
+# (node drains, cluster upgrades, `kubectl drain`). It does NOT protect against involuntary events (node crash).
+kind: PodDisruptionBudget
+metadata:
+  # PDB name; conventionally matches the workload it protects.
+  name: webapp
+spec:
+  # At least 1 Pod matching the selector must remain Ready at all times during voluntary disruption.
+  # Alternative: `maxUnavailable: 1`. Use percentages ("50%") for workloads that scale.
+  minAvailable: 1
+  # Which Pods this PDB applies to — selects by label, same mechanism as Services/Deployments.
+  selector:
+    matchLabels:
+      # Must match the labels on the Pods (template.metadata.labels in the Deployment).
+      app: webapp
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+
+---
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: position-tracker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: position-tracker
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+
+---
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: position-tracker
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: position-tracker

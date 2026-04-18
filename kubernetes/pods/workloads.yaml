@@ -5,7 +5,7 @@ metadata:
   labels:
     app: webapp
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: webapp
@@ -22,6 +22,13 @@ spec:
             value: production-microservice
         ports:
           - containerPort: 80
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
 
 ---
 
@@ -47,6 +54,13 @@ spec:
         env:
           - name: SPRING_PROFILES_ACTIVE
             value: production-microservice
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
 
 ---
 
@@ -74,6 +88,13 @@ spec:
         env:
           - name: SPRING_PROFILES_ACTIVE
             value: production-microservice
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
 
 ---
 
@@ -98,30 +119,113 @@ spec:
         image: richardchesterwood/k8s-fleetman-queue:release2
         ports:
           - containerPort: 8161
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
 
 ---
 
+# Kubernetes API group/version for this object. "apps/v1" is the stable API for workloads like Deployment.
 apiVersion: apps/v1
+# The type of object being defined. Deployment manages a replicated, self-healing set of Pods.
 kind: Deployment
+# Identifying information about this object (name, namespace, labels, annotations).
 metadata:
+  # Unique name of this Deployment within its namespace. Used by kubectl, Services, etc.
   name: api-gateway
+  # Arbitrary key/value tags attached to the Deployment object itself (useful for filtering/selecting).
   labels:
     app: api-gateway
+# The desired state: what this Deployment should look like when running.
 spec:
-  replicas: 1
+  # How many Pod copies to keep running at all times. 2 gives basic HA for the gateway.
+  replicas: 2
+  # Tells the Deployment which Pods it "owns" — must match the template's labels below.
   selector:
+    # Equality-based match: every listed label must be present on the Pod.
     matchLabels:
       app: api-gateway
+  # The Pod template — the blueprint used to create each replica.
   template:
+    # Metadata applied to every Pod created from this template.
     metadata:
+      # These labels MUST include everything in spec.selector.matchLabels, otherwise the Deployment won't adopt its Pods.
       labels:
         app: api-gateway
+    # The actual Pod specification (containers, volumes, scheduling hints, etc.).
     spec:
+      # List of containers that run inside each Pod. Most Pods have just one "main" container.
       containers:
+      # A single container definition. "-" makes this the first (and here, only) item in the list.
       - name: api-gateway
-        image: richardchesterwood/k8s-fleetman-api-gateway:release2
+        # Container image + tag pulled from a registry (Docker Hub in this case).
+        image: richardchesterwood/k8s-fleetman-api-gateway:performance
+        # Ports the container exposes. Informational + used by probes/Services to target the right port.
         ports:
+          # The port number the application listens on inside the container.
           - containerPort: 8080
+        # Environment variables injected into the container process at startup.
         env:
+          # A single env var entry.
           - name: SPRING_PROFILES_ACTIVE
+            # Activates the "production-microservice" Spring profile so the app uses prod config.
             value: production-microservice
+        # CPU/memory guarantees and caps. Critical for scheduling, HPA, and preventing noisy-neighbor issues.
+        resources:
+          # Minimum resources reserved for this container on its node. Scheduler uses this to place the Pod.
+          requests:
+            # 100 milli-cores = 0.1 vCPU reserved. HPA percentages are computed against this value.
+            cpu: "100m"
+            # 256 MiB of RAM reserved.
+            memory: "256Mi"
+          # Hard ceiling the container cannot exceed at runtime.
+          limits:
+            # Throttled above 500m (0.5 vCPU) — CPU overages cause throttling, not kills.
+            cpu: "500m"
+            # Killed with OOMKilled if it exceeds 512 MiB — memory overages DO cause restarts.
+            memory: "512Mi"
+        # Readiness probe: tells Kubernetes when this pod is ready to receive traffic.
+        # If it fails, the pod is removed from the Service's endpoints (no restart, just no traffic).
+        readinessProbe:
+          # Use an HTTP GET request as the health check mechanism (other options: tcpSocket, exec, grpc).
+          httpGet:
+            # URL path to hit on the container. "/" works, but a dedicated endpoint like
+            # "/actuator/health/readiness" is preferred for Spring Boot apps.
+            path: /
+            # TCP port inside the container to send the request to (matches containerPort above).
+            port: 8080
+          # Wait 10 seconds after the container starts before running the first readiness check,
+          # giving the Spring Boot app a short warm-up window.
+          initialDelaySeconds: 10
+          # Run the probe every 10 seconds after the initial delay.
+          periodSeconds: 10
+          # Mark this probe attempt as failed if the HTTP response doesn't return within 3 seconds.
+          timeoutSeconds: 3
+          # Only 1 successful response is needed to flip the pod back to "Ready" after a failure.
+          # (For readiness probes, this can be > 1; for liveness it must be 1.)
+          successThreshold: 1
+          # After 3 consecutive failed probes (~30s), the pod is marked NotReady and taken out of the Service.
+          failureThreshold: 3
+
+        # Liveness probe: detects when the container is stuck/deadlocked and needs to be restarted.
+        # If it fails past the threshold, Kubernetes kills and restarts the container.
+        livenessProbe:
+          # Same HTTP GET mechanism. Ideally this points to a different endpoint than readiness
+          # (e.g. "/actuator/health/liveness") so "can serve traffic" and "process is alive" are distinct.
+          httpGet:
+            path: /
+            port: 8080
+          # Longer startup grace period than readiness — JVM/Spring can take 20–30s to boot,
+          # and we never want liveness to kill a pod that is still legitimately starting.
+          initialDelaySeconds: 30
+          # Check less frequently than readiness; liveness only needs to catch a truly hung process.
+          periodSeconds: 20
+          # Slightly more lenient timeout to avoid restarts on brief GC pauses or CPU spikes.
+          timeoutSeconds: 5
+          # 3 consecutive failures (~60s of sustained trouble) before the container is restarted.
+          # Note: successThreshold is intentionally omitted — for liveness it must be 1 (Kubernetes default).
+          failureThreshold: 3
